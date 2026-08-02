@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>أسرار التاريخ | anass vision</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; overflow:hidden; background:#05060a; font-family:'Georgia', 'Times New Roman', serif; }
+  canvas { display:block; }
+
+  #vignette {
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.75) 100%);
+  }
+
+  #hud {
+    position:fixed; top:16px; left:16px; z-index:10;
+    color:#d8c48a; font-size:15px; letter-spacing:1px;
+    text-shadow:0 0 8px rgba(0,0,0,0.9);
+    display:flex; align-items:center; gap:10px;
+    background:rgba(10,10,15,0.35); padding:8px 16px; border-radius:20px;
+    border:1px solid rgba(216,196,138,0.25);
+  }
+  #hud .orb-icon {
+    width:12px; height:12px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #fff9d6, #d8c48a 60%, #7a5c1e 100%);
+    box-shadow:0 0 8px #d8c48a;
+  }
+
+  #fact-box {
+    position:fixed; bottom:40px; left:50%; transform:translateX(-50%) translateY(20px);
+    max-width:560px; width:88%; z-index:10;
+    background:linear-gradient(180deg, rgba(15,14,22,0.92), rgba(8,7,12,0.92));
+    border:1px solid rgba(216,196,138,0.35);
+    border-radius:10px; padding:18px 24px;
+    color:#e8dfc4; font-size:16px; line-height:1.8; text-align:center;
+    opacity:0; transition:opacity 0.6s ease, transform 0.6s ease;
+    box-shadow:0 0 30px rgba(0,0,0,0.6);
+  }
+  #fact-box.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  #fact-box .label { color:#9fd8d8; font-size:12px; letter-spacing:3px; display:block; margin-bottom:8px; text-transform:uppercase; }
+
+  #crosshair-hint {
+    position:fixed; bottom:16px; right:16px; z-index:10;
+    color:rgba(216,196,138,0.55); font-size:12px; letter-spacing:1px;
+    background:rgba(10,10,15,0.35); padding:6px 12px; border-radius:8px;
+  }
+
+  #hearts {
+    position:fixed; top:16px; right:16px; z-index:10;
+    display:flex; gap:6px;
+    background:rgba(10,10,15,0.35); padding:8px 14px; border-radius:20px;
+    border:1px solid rgba(216,196,138,0.25);
+  }
+  #hearts .heart {
+    width:16px; height:16px; position:relative;
+    filter: drop-shadow(0 0 4px rgba(200,50,50,0.7));
+  }
+  #hearts .heart svg { width:100%; height:100%; }
+  #hearts .heart.lost svg path { fill:#2a2020; }
+
+  #eraTimerWrap {
+    position:fixed; top:64px; left:50%; transform:translateX(-50%); z-index:10;
+    width:280px; max-width:70vw;
+  }
+  #eraTimerBar {
+    height:5px; width:100%; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;
+    border:1px solid rgba(216,196,138,0.2);
+  }
+  #eraTimerFill {
+    height:100%; width:100%; background:linear-gradient(90deg,#9fd8d8,#d8c48a);
+    transition:width 0.2s linear;
+  }
+
+  #eraBanner {
+    position:fixed; top:38%; left:50%; transform:translate(-50%,-50%) scale(0.9);
+    z-index:15; text-align:center; opacity:0; pointer-events:none;
+    transition:opacity 1s ease, transform 1s ease;
+  }
+  #eraBanner.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  #eraBanner .era-label { font-size:11px; letter-spacing:5px; color:#9fd8d8; margin-bottom:8px; }
+  #eraBanner .era-name { font-size:34px; color:#d8c48a; text-shadow:0 0 30px rgba(216,196,138,0.6); }
+
+  #portalFlash {
+    position:fixed; inset:0; z-index:25; pointer-events:none;
+    background:#fff2c8; opacity:0;
+  }
+
+  #gameover {
+    position:fixed; inset:0; z-index:35; display:none;
+    background:radial-gradient(ellipse at center, #1a0808 0%, #050505 100%);
+    color:#e8dfc4; align-items:center; justify-content:center; flex-direction:column; text-align:center;
+  }
+  #gameover.show { display:flex; }
+  #gameover h1 { font-size:38px; color:#d86a5a; text-shadow:0 0 25px rgba(216,90,80,0.5); margin-bottom:14px; }
+  #gameover p { color:#a89f86; font-size:15px; max-width:440px; line-height:1.9; margin-bottom:26px; }
+  #retryBtn {
+    background:linear-gradient(180deg, #d8c48a, #a68a4a); border:none; color:#1a1508;
+    font-family:inherit; font-size:16px; font-weight:bold; letter-spacing:2px;
+    padding:12px 40px; border-radius:30px; cursor:pointer;
+  }
+
+  #overlay {
+    position:fixed; inset:0; z-index:20;
+    background: radial-gradient(ellipse at center, #14141c 0%, #050508 100%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; color:#e8dfc4;
+    transition:opacity 1s ease;
+  }
+  #overlay.hidden { opacity:0; pointer-events:none; }
+  #overlay .brand { font-size:13px; letter-spacing:6px; color:#9fd8d8; margin-bottom:18px; opacity:0.85; }
+  #overlay h1 {
+    font-size:44px; color:#d8c48a; text-shadow:0 0 25px rgba(216,196,138,0.5);
+    margin-bottom:10px; letter-spacing:2px;
+  }
+  #overlay p.sub { color:#a89f86; font-size:15px; margin-bottom:34px; max-width:480px; line-height:1.8; }
+  #startBtn {
+    background:linear-gradient(180deg, #d8c48a, #a68a4a); border:none; color:#1a1508;
+    font-family:inherit; font-size:17px; font-weight:bold; letter-spacing:2px;
+    padding:14px 46px; border-radius:30px; cursor:pointer;
+    box-shadow:0 0 25px rgba(216,196,138,0.4);
+    transition:transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  #startBtn:hover { transform:scale(1.05); box-shadow:0 0 35px rgba(216,196,138,0.7); }
+  #overlay .controls { margin-top:36px; font-size:12.5px; color:#8a8270; letter-spacing:1px; line-height:2; }
+  #overlay .controls b { color:#d8c48a; }
+
+  #endscreen {
+    position:fixed; inset:0; z-index:30; display:none;
+    background:radial-gradient(ellipse at center, #14141c 0%, #050508 100%);
+    color:#e8dfc4; align-items:center; justify-content:center; flex-direction:column; text-align:center;
+  }
+  #endscreen.show { display:flex; }
+  #endscreen h1 { font-size:40px; color:#d8c48a; text-shadow:0 0 25px rgba(216,196,138,0.5); margin-bottom:14px; }
+  #endscreen p { color:#a89f86; font-size:15px; max-width:480px; line-height:1.9; margin-bottom:20px; }
+  #endscreen .final-brand { font-size:14px; letter-spacing:5px; color:#9fd8d8; margin-top:20px; }
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <div class="brand">ANASS VISION &nbsp;•&nbsp; رؤية أنس</div>
+  <h1>أسرار التاريخ</h1>
+  <p class="sub">سافر عبر بوابات الزمن بين حقب المغرب المتعاقبة... اجمع الأثر المضيء قبل نفاد الوقت، واحذر حراس الزمن الذين يطاردونك في الظلام.</p>
+  <button id="startBtn">ابدأ الرحلة</button>
+  <div class="controls">
+    <b>WASD</b> أو الأسهم للتحرك &nbsp;&nbsp;|&nbsp;&nbsp; اسحب الفأرة لتحريك الكاميرا &nbsp;&nbsp;|&nbsp;&nbsp; <b>Space</b> للقفز
+    <br>3 قلوب فقط... واحذر الحارس عندما يظهر!
+  </div>
+</div>
+
+<div id="endscreen">
+  <h1>أحسنت! اكتملت الأسرار</h1>
+  <p>لقد عبرت بوابات الزمن عبر سبع حقب من تاريخ المغرب، وأفلتّ من حراس الزمن في كل مرة. تابع القناة لمزيد من رحلات التاريخ والغموض.</p>
+  <div class="final-brand">ANASS VISION • رؤية أنس</div>
+</div>
+
+<div id="vignette"></div>
+<div id="portalFlash"></div>
+<div id="hud"><span class="orb-icon"></span><span id="orbCount">0 / 0</span></div>
+<div id="hearts"></div>
+<div id="eraTimerWrap"><div id="eraTimerBar"><div id="eraTimerFill"></div></div></div>
+<div id="eraBanner"><div class="era-label">حقبة جديدة</div><div class="era-name" id="eraNameText"></div></div>
+<div id="fact-box"><span class="label">حقبة مكتشفة</span><span id="factText"></span></div>
+<div id="crosshair-hint">اسحب الفأرة للنظر حولك</div>
+
+<div id="gameover">
+  <h1>خسرت الأثر...</h1>
+  <p>طاردك حارس الزمن واختفى الأثر بين يديك. لكن التاريخ لا يُنسى، حاول من جديد.</p>
+  <button id="retryBtn">إعادة المحاولة</button>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+// ---------- SETUP ----------
+const scene = new THREE.Scene();
+const fogColor = 0x0a0c14;
+scene.fog = new THREE.FogExp2(fogColor, 0.045);
+scene.background = new THREE.Color(fogColor);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 500);
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ---------- LIGHTING ----------
+const moonLight = new THREE.DirectionalLight(0x8fa8d8, 0.35);
+moonLight.position.set(-30, 50, -20);
+moonLight.castShadow = true;
+moonLight.shadow.mapSize.set(1024,1024);
+moonLight.shadow.camera.left = -60;
+moonLight.shadow.camera.right = 60;
+moonLight.shadow.camera.top = 60;
+moonLight.shadow.camera.bottom = -60;
+scene.add(moonLight);
+scene.add(moonLight.target);
+
+const hemi = new THREE.HemisphereLight(0x2a3550, 0x0a0806, 0.4);
+scene.add(hemi);
+
+const ambient = new THREE.AmbientLight(0x1a1e2e, 0.5);
+scene.add(ambient);
+
+// ---------- SKY DOME (gradient shader, follows camera like a real skybox) ----------
+const skyGeo = new THREE.SphereGeometry(280, 24, 16);
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide,
+  depthWrite: false,
+  uniforms: {
+    topColor: { value: new THREE.Color(0x0a0e1a) },
+    bottomColor: { value: new THREE.Color(0x2a2438) },
+    offset: { value: 20 },
+    exponent: { value: 0.7 }
+  },
+  vertexShader: `
+    varying vec3 vWorldPosition;
+    void main(){
+      vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+      vWorldPosition = worldPosition.xyz;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform vec3 topColor;
+    uniform vec3 bottomColor;
+    uniform float offset;
+    uniform float exponent;
+    varying vec3 vWorldPosition;
+    void main(){
+      float h = normalize(vWorldPosition + vec3(0.0, offset, 0.0)).y;
+      gl_FragColor = vec4(mix(bottomColor, topColor, max(pow(max(h,0.0), exponent),0.0)), 1.0);
+    }
+  `
+});
+const skyDome = new THREE.Mesh(skyGeo, skyMat);
+skyDome.renderOrder = -2;
+scene.add(skyDome);
+
+// sun / moon disc, always positioned along the celestial direction from the camera
+const sunTexture = (() => {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createRadialGradient(64,64,0,64,64,64);
+  grad.addColorStop(0,'rgba(255,255,255,1)');
+  grad.addColorStop(0.4,'rgba(255,240,200,0.9)');
+  grad.addColorStop(1,'rgba(255,240,200,0)');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+})();
+const sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map:sunTexture, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false }));
+sunSprite.scale.set(30,30,1);
+sunSprite.renderOrder = -1;
+scene.add(sunSprite);
+
+// drifting clouds (soft flat billboards at altitude)
+const cloudTexture = (() => {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+  const ctx = c.getContext('2d');
+  ctx.filter = 'blur(10px)';
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  for(let i=0;i<6;i++){
+    const cx = 40 + Math.random()*176, cy = 50 + Math.random()*30, r = 20 + Math.random()*22;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+  }
+  return new THREE.CanvasTexture(c);
+})();
+const clouds = [];
+for(let i=0;i<14;i++){
+  const mat = new THREE.SpriteMaterial({ map:cloudTexture, transparent:true, opacity:0.35, depthWrite:false });
+  const cloud = new THREE.Sprite(mat);
+  const s = 18 + Math.random()*16;
+  cloud.scale.set(s, s*0.5, 1);
+  cloud.position.set((Math.random()-0.5)*300, 45 + Math.random()*20, (Math.random()-0.5)*300);
+  scene.add(cloud);
+  clouds.push({ sprite:cloud, speed:0.3 + Math.random()*0.4 });
+}
+
+// Torches (flickering point lights)
+const torches = [];
+function addTorch(x,z){
+  const light = new THREE.PointLight(0xff8c3a, 2.2, 14, 2);
+  light.position.set(x, 2.4, z);
+  light.castShadow = false;
+  scene.add(light);
+  torches.push({ light, base:2.2, phase: Math.random()*10 });
+
+  const flameGeo = new THREE.SphereGeometry(0.15, 8, 8);
+  const flameMat = new THREE.MeshBasicMaterial({ color:0xffaa44 });
+  const flame = new THREE.Mesh(flameGeo, flameMat);
+  flame.position.set(x, 2.4, z);
+  scene.add(flame);
+}
+
+// ---------- GROUND (procedural realistic texture) ----------
+function makeGroundTextures(){
+  const size = 512;
+  const diffuseCanvas = document.createElement('canvas');
+  diffuseCanvas.width = diffuseCanvas.height = size;
+  const dctx = diffuseCanvas.getContext('2d');
+
+  // base dirt tone
+  dctx.fillStyle = '#1c1710';
+  dctx.fillRect(0,0,size,size);
+
+  // patchy variation (dry grass tufts, dirt patches, small rocks)
+  const patchColors = ['#26301f','#1f2818','#2a2015','#141410','#332818'];
+  for(let i=0;i<900;i++){
+    const x = Math.random()*size, y = Math.random()*size;
+    const r = 2 + Math.random()*10;
+    dctx.fillStyle = patchColors[Math.floor(Math.random()*patchColors.length)];
+    dctx.globalAlpha = 0.25 + Math.random()*0.35;
+    dctx.beginPath(); dctx.ellipse(x,y,r,r*0.6,Math.random()*Math.PI,0,Math.PI*2); dctx.fill();
+  }
+  dctx.globalAlpha = 1;
+
+  // fine speckle (small stones / texture grain)
+  for(let i=0;i<3500;i++){
+    const x = Math.random()*size, y = Math.random()*size;
+    const shade = Math.random()*40;
+    dctx.fillStyle = `rgba(${20+shade},${18+shade*0.8},${14+shade*0.6},0.5)`;
+    dctx.fillRect(x,y,1.5,1.5);
+  }
+
+  // faint winding path streaks
+  dctx.strokeStyle = 'rgba(70,58,40,0.15)';
+  dctx.lineWidth = 14;
+  for(let i=0;i<3;i++){
+    dctx.beginPath();
+    let px = Math.random()*size, py = 0;
+    dctx.moveTo(px,py);
+    for(let s=0;s<6;s++){
+      px += (Math.random()-0.5)*160;
+      py += size/6;
+      dctx.lineTo(px,py);
+    }
+    dctx.stroke();
+  }
+
+  const diffuse = new THREE.CanvasTexture(diffuseCanvas);
+  diffuse.wrapS = diffuse.wrapT = THREE.RepeatWrapping;
+  diffuse.repeat.set(30,30);
+
+  // bump map: soft grayscale noise for surface roughness
+  const bumpCanvas = document.createElement('canvas');
+  bumpCanvas.width = bumpCanvas.height = size;
+  const bctx = bumpCanvas.getContext('2d');
+  bctx.fillStyle = '#808080';
+  bctx.fillRect(0,0,size,size);
+  for(let i=0;i<1400;i++){
+    const x = Math.random()*size, y = Math.random()*size;
+    const r = 3 + Math.random()*14;
+    const shade = 90 + Math.random()*90;
+    bctx.fillStyle = `rgb(${shade},${shade},${shade})`;
+    bctx.globalAlpha = 0.3;
+    bctx.beginPath(); bctx.arc(x,y,r,0,Math.PI*2); bctx.fill();
+  }
+  bctx.globalAlpha = 1;
+  bctx.filter = 'blur(4px)';
+  bctx.drawImage(bumpCanvas,0,0);
+
+  const bump = new THREE.CanvasTexture(bumpCanvas);
+  bump.wrapS = bump.wrapT = THREE.RepeatWrapping;
+  bump.repeat.set(30,30);
+
+  return { diffuse, bump };
+}
+const groundTex = makeGroundTextures();
+
+const groundGeo = new THREE.PlaneGeometry(300, 300, 50, 50);
+const groundMat = new THREE.MeshStandardMaterial({
+  color:0x141821, map:groundTex.diffuse, bumpMap:groundTex.bump, bumpScale:0.12,
+  roughness:1, metalness:0
+});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// horizon haze disc — follows the camera so the sky always blends realistically into the ground
+const hazeTexture = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createRadialGradient(128,128,60,128,128,128);
+  grad.addColorStop(0,'rgba(255,235,210,0)');
+  grad.addColorStop(0.75,'rgba(255,225,195,0.35)');
+  grad.addColorStop(1,'rgba(255,225,195,0)');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,256,256);
+  return new THREE.CanvasTexture(c);
+})();
+const mistGeo = new THREE.PlaneGeometry(320,320);
+const mistMat = new THREE.MeshBasicMaterial({ map:hazeTexture, transparent:true, opacity:0.4, depthWrite:false });
+const mist = new THREE.Mesh(mistGeo, mistMat);
+mist.rotation.x = -Math.PI/2;
+mist.position.y = 0.05;
+scene.add(mist);
+
+// ---------- STARFIELD (fades in at night) ----------
+const starCount = 900;
+const starGeo = new THREE.BufferGeometry();
+const starPos = new Float32Array(starCount*3);
+for(let i=0;i<starCount;i++){
+  const r = 180 + Math.random()*40;
+  const theta = Math.random()*Math.PI*2;
+  const phi = Math.random()*Math.PI*0.45; // upper hemisphere only
+  starPos[i*3] = r*Math.sin(phi)*Math.cos(theta);
+  starPos[i*3+1] = r*Math.cos(phi) + 20;
+  starPos[i*3+2] = r*Math.sin(phi)*Math.sin(theta);
+}
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
+const starMat = new THREE.PointsMaterial({ color:0xdfe8ff, size:0.9, transparent:true, opacity:0, depthWrite:false });
+const stars = new THREE.Points(starGeo, starMat);
+scene.add(stars);
+
+// ---------- ENVIRONMENT: TREES ----------
+function makeTree(x,z){
+  const group = new THREE.Group();
+  const trunkMat = new THREE.MeshStandardMaterial({ color:0x1c1712, roughness:1 });
+  const trunkH = 3 + Math.random()*2;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.25,trunkH,6), trunkMat);
+  trunk.position.y = trunkH/2;
+  trunk.castShadow = true;
+  group.add(trunk);
+
+  const leafMat = new THREE.MeshStandardMaterial({ color:0x141d16, roughness:1 });
+  for(let i=0;i<3;i++){
+    const s = 1.4 - i*0.3;
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(s, 1.6, 7), leafMat);
+    cone.position.y = trunkH + i*1.1 - 0.3;
+    cone.castShadow = true;
+    group.add(cone);
+  }
+  group.position.set(x,0,z);
+  group.rotation.y = Math.random()*Math.PI*2;
+  scene.add(group);
+}
+
+// ---------- ENVIRONMENT: RUINS ----------
+const ruinMat = new THREE.MeshStandardMaterial({ color:0x3a352c, roughness:0.9 });
+function makePillar(x,z,h,broken){
+  const geo = new THREE.CylinderGeometry(0.6,0.7,h,8);
+  const pillar = new THREE.Mesh(geo, ruinMat);
+  pillar.position.set(x, h/2, z);
+  pillar.castShadow = true;
+  pillar.receiveShadow = true;
+  if(broken) pillar.rotation.z = (Math.random()-0.5)*0.3;
+  scene.add(pillar);
+}
+function makeArchStones(x,z){
+  for(let i=0;i<4;i++){
+    const s = new THREE.Mesh(new THREE.BoxGeometry(1.2,0.6,1), ruinMat);
+    s.position.set(x + i*0.1, 0.3 + Math.random()*0.3, z + i*1.3);
+    s.rotation.y = Math.random()*0.6;
+    s.castShadow = true; s.receiveShadow = true;
+    scene.add(s);
+  }
+}
+
+// Scatter environment (avoid center spawn area radius 8)
+function randPos(){
+  let x,z,d;
+  do {
+    x = (Math.random()-0.5)*140;
+    z = (Math.random()-0.5)*140;
+    d = Math.sqrt(x*x+z*z);
+  } while(d < 8);
+  return [x,z];
+}
+
+for(let i=0;i<55;i++){ const [x,z]=randPos(); makeTree(x,z); }
+for(let i=0;i<14;i++){ const [x,z]=randPos(); makePillar(x,z, 2+Math.random()*4, Math.random()>0.5); }
+for(let i=0;i<8;i++){ const [x,z]=randPos(); makeArchStones(x,z); }
+
+// Torches near a few pillars
+addTorch(6,-4); addTorch(-8,5); addTorch(14,10); addTorch(-16,-9); addTorch(2,18);
+
+// ---------- FIREFLIES ----------
+const fireflyCount = 250;
+const fireflyGeo = new THREE.BufferGeometry();
+const positions = new Float32Array(fireflyCount*3);
+const speeds = new Float32Array(fireflyCount);
+for(let i=0;i<fireflyCount;i++){
+  positions[i*3] = (Math.random()-0.5)*120;
+  positions[i*3+1] = Math.random()*4 + 0.3;
+  positions[i*3+2] = (Math.random()-0.5)*120;
+  speeds[i] = 0.2 + Math.random()*0.5;
+}
+fireflyGeo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+const fireflyMat = new THREE.PointsMaterial({ color:0x9fe8d8, size:0.12, transparent:true, opacity:0.85, blending:THREE.AdditiveBlending, depthWrite:false });
+const fireflies = new THREE.Points(fireflyGeo, fireflyMat);
+scene.add(fireflies);
+
+// ---------- ORBS (collectibles) ----------
+const orbData = [
+  { pos:[10,-6], era:"عصر الأدارسة", fog:0x0a0c14, ground:0x141821, torch:0xff8c3a, guardian:0x3a2a1a, time:32,
+    fact:"أسس إدريس الأول أول دولة إسلامية مستقلة بالمغرب سنة 172هـ، لتصبح فاس لاحقًا عاصمتها الروحية والعلمية." },
+  { pos:[-14,8], era:"عصر المرابطين", fog:0x140f08, ground:0x201810, torch:0xffaa44, guardian:0x3a2814, time:30,
+    fact:"وحّد يوسف بن تاشفين قبائل المرابطين وأسس مدينة مراكش، ثم عبر إلى الأندلس لنجدة ملوك الطوائف." },
+  { pos:[18,14], era:"عصر الموحدين", fog:0x080f14, ground:0x101a22, torch:0x6ad8d8, guardian:0x1a2e3a, time:29,
+    fact:"بنى الموحدون صومعة الكتبية بمراكش، وامتدت دولتهم لتشمل المغرب والأندلس في وحدة سياسية نادرة." },
+  { pos:[-20,-12], era:"عصر المرينيين", fog:0x120f0a, ground:0x1e1810, torch:0xd8c060, guardian:0x3a3018, time:27,
+    fact:"حوّل المرينيون فاس إلى منارة علمية بمدارسها العريقة، واستقطبوا العلماء من كل أنحاء العالم الإسلامي." },
+  { pos:[24,-8], era:"معركة وادي المخازن", fog:0x140808, ground:0x1e1010, torch:0xd8543a, guardian:0x4a1414, time:24,
+    fact:"في معركة وادي المخازن سنة 1578، هزم السعديون جيشًا برتغاليًا كبيرًا في معركة عرفت بمعركة الملوك الثلاثة." },
+  { pos:[-6,20], era:"عصر العلويين", fog:0x100a14, ground:0x181022, torch:0xb08cd8, guardian:0x2e1a3a, time:24,
+    fact:"تحكم الأسرة العلوية المغرب منذ القرن السابع عشر، لتكون من أطول الأسر الحاكمة استمرارًا في العالم." },
+  { pos:[6,-22], era:"مقاومة الريف", fog:0x0c0e10, ground:0x161a1c, torch:0x8ca0a8, guardian:0x1a2226, time:22,
+    fact:"قاد محمد بن عبد الكريم الخطابي مقاومة الريف، وألحق هزيمة شهيرة بالجيش الإسباني في معركة أنوال 1921." },
+];
+
+const orbs = [];
+const glowTexture = (() => {
+  const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+  const ctx = c.getContext('2d');
+  const grad = ctx.createRadialGradient(32,32,0,32,32,32);
+  grad.addColorStop(0,'rgba(255,240,180,0.9)');
+  grad.addColorStop(1,'rgba(255,240,180,0)');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,64,64);
+  return new THREE.CanvasTexture(c);
+})();
+
+orbData.forEach((d,idx) => {
+  const group = new THREE.Group();
+  const core = new THREE.Mesh(
+    new THREE.IcosahedronGeometry(0.4, 1),
+    new THREE.MeshStandardMaterial({ color:0xfff2b0, emissive:0xd8c060, emissiveIntensity:1.5, roughness:0.3 })
+  );
+  group.add(core);
+
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map:glowTexture, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false }));
+  glow.scale.set(2.5,2.5,1);
+  group.add(glow);
+
+  const light = new THREE.PointLight(0xffe8a0, 1.2, 6);
+  group.add(light);
+
+  group.position.set(d.pos[0], 1.2, d.pos[1]);
+  group.visible = (idx === 0);
+  scene.add(group);
+  orbs.push({ mesh:group, fact:d.fact, era:d.era, collected:false, baseY:1.2, idx });
+});
+
+document.getElementById('orbCount').textContent = `0 / ${orbs.length}`;
+
+// ---------- ARCHITECTURAL EVOLUTION: a distinct landmark per era ----------
+function stoneMat(hex){ return new THREE.MeshStandardMaterial({ color:hex, roughness:0.9, metalness:0.05 }); }
+
+function buildEraLandmark(idx, x, z){
+  const g = new THREE.Group();
+  g.position.set(x, 0, z + 6); // offset from orb so it doesn't overlap collection point
+
+  if(idx === 0){
+    // Idrissides: modest mudbrick mosque - simple cube + small dome + thin minaret
+    const base = new THREE.Mesh(new THREE.BoxGeometry(3,2.2,3), stoneMat(0x4a3a26));
+    base.position.y = 1.1; g.add(base);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(1,10,8,0,Math.PI*2,0,Math.PI/2), stoneMat(0x5a4830));
+    dome.position.y = 2.2; g.add(dome);
+    const minaret = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.45,4.5,6), stoneMat(0x4a3a26));
+    minaret.position.set(1.8, 2.25, -1.8); g.add(minaret);
+
+  } else if(idx === 1){
+    // Almoravids: small fortified compound - 4 walls + gate
+    const wallMat = stoneMat(0x5a4a30);
+    const wallLen = 6;
+    for(let i=0;i<4;i++){
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(wallLen,2.6,0.4), wallMat);
+      const a = i*Math.PI/2;
+      wall.position.set(Math.sin(a)*wallLen/2, 1.3, Math.cos(a)*wallLen/2);
+      wall.rotation.y = a;
+      g.add(wall);
+    }
+    const gate = new THREE.Mesh(new THREE.BoxGeometry(1.4,2.2,0.6), stoneMat(0x6a5636));
+    gate.position.set(0,1.1,wallLen/2);
+    g.add(gate);
+
+  } else if(idx === 2){
+    // Almohads: tall tapering tower (Koutoubia-like) with merlons
+    const towerMat = stoneMat(0x5c5442);
+    for(let i=0;i<4;i++){
+      const s = 2.6 - i*0.35;
+      const seg = new THREE.Mesh(new THREE.BoxGeometry(s,2.2,s), towerMat);
+      seg.position.y = 1.1 + i*2.15;
+      g.add(seg);
+    }
+    for(let i=0;i<8;i++){
+      const a = (i/8)*Math.PI*2;
+      const merlon = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.5,0.3), towerMat);
+      merlon.position.set(Math.cos(a)*0.9, 9.3, Math.sin(a)*0.9);
+      g.add(merlon);
+    }
+
+  } else if(idx === 3){
+    // Marinids: madrasa courtyard - ring of columns + central fountain
+    const colMat = stoneMat(0x6a5a3c);
+    const colCount = 10;
+    for(let i=0;i<colCount;i++){
+      const a = (i/colCount)*Math.PI*2;
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.24,2.6,8), colMat);
+      col.position.set(Math.cos(a)*3.2, 1.3, Math.sin(a)*3.2);
+      g.add(col);
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.2,0.5), colMat);
+      cap.position.set(Math.cos(a)*3.2, 2.7, Math.sin(a)*3.2);
+      g.add(cap);
+    }
+    const fountain = new THREE.Mesh(new THREE.CylinderGeometry(0.9,1,0.5,12), stoneMat(0x7a6a48));
+    fountain.position.y = 0.25;
+    g.add(fountain);
+
+  } else if(idx === 4){
+    // Saadis / Wadi al-Makhazin: war-torn fortress - broken walls + scattered debris
+    const wallMat = stoneMat(0x4a3838);
+    for(let i=0;i<3;i++){
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(3.5,2.4,0.4), wallMat);
+      wall.position.set(-4 + i*4, 1.2, 0);
+      wall.rotation.z = (Math.random()-0.5)*0.4;
+      wall.rotation.y = (Math.random()-0.5)*0.3;
+      g.add(wall);
+    }
+    for(let i=0;i<5;i++){
+      const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.4+Math.random()*0.3), wallMat);
+      rock.position.set((Math.random()-0.5)*6, 0.3, (Math.random()-0.5)*4);
+      g.add(rock);
+    }
+
+  } else if(idx === 5){
+    // Alaouites: ornate palace - dome + twin flanking towers + arched gate
+    const palMat = stoneMat(0x5a4468);
+    const domeBase = new THREE.Mesh(new THREE.CylinderGeometry(1.8,1.8,2,12), palMat);
+    domeBase.position.y = 1; g.add(domeBase);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(1.8,12,10,0,Math.PI*2,0,Math.PI/2), stoneMat(0x6a5478));
+    dome.position.y = 2; g.add(dome);
+    [-3.4, 3.4].forEach(dx => {
+      const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.7,3.6,8), palMat);
+      tower.position.set(dx, 1.8, 0); g.add(tower);
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(0.7,1,8), stoneMat(0x6a5478));
+      cap.position.set(dx, 4.1, 0); g.add(cap);
+    });
+    for(let i=0;i<5;i++){
+      const arch = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.8,0.6), palMat);
+      const a = (i-2)*0.28;
+      arch.position.set(Math.sin(a)*1.6, 1.6+Math.cos(a)*0.6, 1.9);
+      g.add(arch);
+    }
+
+  } else if(idx === 6){
+    // Rif resistance: rugged stone watchtower + defensive rock wall
+    const rockMat = stoneMat(0x3a3e3c);
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.9,1.3,4,7), rockMat);
+    tower.position.y = 2; g.add(tower);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(1.2,1,7), stoneMat(0x2c302e));
+    roof.position.y = 4.5; g.add(roof);
+    for(let i=0;i<8;i++){
+      const a = (i/8)*Math.PI*2;
+      const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.5+Math.random()*0.3), rockMat);
+      rock.position.set(Math.cos(a)*4.5, 0.3, Math.sin(a)*4.5);
+      g.add(rock);
+    }
+  }
+
+  g.traverse(m => { if(m.isMesh){ m.castShadow = true; m.receiveShadow = true; } });
+  scene.add(g);
+}
+
+orbData.forEach((d,idx) => buildEraLandmark(idx, d.pos[0], d.pos[1]));
+
+// ---------- ERA / TIME-TRAVEL STATE ----------
+let currentEra = 0;
+let lives = 3;
+let inTransition = false;
+let eraTimeLeft = orbData[0].time;
+const spawnPoint = new THREE.Vector3(0,0,0);
+
+const heartsEl = document.getElementById('hearts');
+function renderHearts(){
+  heartsEl.innerHTML = '';
+  for(let i=0;i<3;i++){
+    const div = document.createElement('div');
+    div.className = 'heart' + (i >= lives ? ' lost' : '');
+    div.innerHTML = '<svg viewBox="0 0 32 29"><path d="M16 29 C16 29 0 18 0 8.5 C0 3 4 0 8.5 0 C12 0 15 2 16 5.5 C17 2 20 0 23.5 0 C28 0 32 3 32 8.5 C32 18 16 29 16 29 Z" fill="#d85a5a"/></svg>';
+    heartsEl.appendChild(div);
+  }
+}
+renderHearts();
+
+const eraTimerFill = document.getElementById('eraTimerFill');
+const eraBanner = document.getElementById('eraBanner');
+const eraNameText = document.getElementById('eraNameText');
+
+// dominant mood light that follows the player, recolored per era
+const eraLight = new THREE.PointLight(orbData[0].torch, 1.4, 30);
+scene.add(eraLight);
+
+// ---------- DAY / NIGHT CYCLE ----------
+const DAY_CYCLE_SECONDS = 100; // one full day+night loop
+const eraFogColor = new THREE.Color(orbData[0].fog);
+const eraGroundColor = new THREE.Color(orbData[0].ground);
+
+const SKY_NIGHT = new THREE.Color(0x03040a);
+const SKY_DAWN  = new THREE.Color(0x5a3a3a);
+const SKY_DAY   = new THREE.Color(0x2a3548);
+const SKY_DUSK  = new THREE.Color(0x3a2a4a);
+
+function updateDayNight(t){
+  const cyclePos = (t % DAY_CYCLE_SECONDS) / DAY_CYCLE_SECONDS; // 0..1
+  const sunAngle = cyclePos * Math.PI * 2;
+  const sunHeight = Math.sin(sunAngle); // -1 night .. +1 day
+
+  // pick sky tint by phase
+  let skyTint;
+  if(cyclePos < 0.25){ skyTint = SKY_NIGHT.clone().lerp(SKY_DAWN, cyclePos/0.25); }
+  else if(cyclePos < 0.5){ skyTint = SKY_DAWN.clone().lerp(SKY_DAY, (cyclePos-0.25)/0.25); }
+  else if(cyclePos < 0.75){ skyTint = SKY_DAY.clone().lerp(SKY_DUSK, (cyclePos-0.5)/0.25); }
+  else { skyTint = SKY_DUSK.clone().lerp(SKY_NIGHT, (cyclePos-0.75)/0.25); }
+
+  const dayFactor = Math.max(0, sunHeight); // 0..1
+  const nightFactor = Math.max(0, -sunHeight); // 0..1
+  window.__dayFactor = dayFactor;
+  window.__nightFactor = nightFactor;
+
+  scene.fog.color.copy(eraFogColor).lerp(skyTint, 0.55);
+  ground.material.color.copy(eraGroundColor).lerp(skyTint, 0.3).multiplyScalar(0.7 + dayFactor*0.3);
+
+  ambient.intensity = 0.3 + dayFactor*0.35;
+  hemi.intensity = 0.3 + dayFactor*0.4;
+
+  // sun/moon light + visible disc
+  const sunDir = new THREE.Vector3(Math.cos(sunAngle), Math.max(0.06, sunHeight), Math.sin(sunAngle)*0.5 - 0.3).normalize();
+  moonLight.position.copy(sunDir).multiplyScalar(80);
+  moonLight.target.position.set(0,0,0);
+  const sunColor = new THREE.Color(0xfff0d0);
+  const moonColor = new THREE.Color(0x8fa8d8);
+  moonLight.color.copy(dayFactor > 0 ? sunColor : moonColor);
+  moonLight.intensity = 0.25 + dayFactor*0.5 + nightFactor*0.15;
+
+  sunSprite.position.copy(camera.position).addScaledVector(sunDir, 150);
+  sunSprite.material.color.copy(dayFactor > 0 ? sunColor : moonColor);
+  const horizonBoost = 1 - Math.abs(sunHeight); // bigger/warmer near horizon (dawn/dusk look)
+  sunSprite.scale.setScalar(28 + horizonBoost*22);
+
+  // sky dome gradient
+  const domeTop = skyTint.clone().multiplyScalar(0.55 + dayFactor*0.5);
+  const domeBottom = skyTint.clone().lerp(new THREE.Color(0xffe0b0), cyclePos < 0.3 ? (1-cyclePos/0.3)*0.35 : 0);
+  skyMat.uniforms.topColor.value.copy(domeTop);
+  skyMat.uniforms.bottomColor.value.copy(domeBottom);
+
+  clouds.forEach(c => { c.sprite.material.opacity = 0.15 + dayFactor*0.3; });
+  mist.material.opacity = 0.25 + horizonBoost*0.35;
+
+  stars.material.opacity = Math.min(0.9, nightFactor*1.3);
+}
+
+// ---------- GUARDIANS (enemies, up to 2 active in harder eras) ----------
+function createGuardian(){
+  const mat = new THREE.MeshStandardMaterial({ color:orbData[0].guardian, emissive:orbData[0].guardian, emissiveIntensity:0.6, roughness:0.7, transparent:true, opacity:0.9 });
+  const grp = new THREE.Group();
+  const gBody = new THREE.Mesh(new THREE.ConeGeometry(0.6, 2.2, 6, 1, true), mat);
+  gBody.position.y = 1.1;
+  grp.add(gBody);
+  const gEyeMat = new THREE.MeshBasicMaterial({ color:0xff3030 });
+  const gEyeL = new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6), gEyeMat);
+  gEyeL.position.set(-0.18, 1.6, 0.5);
+  const gEyeR = gEyeL.clone(); gEyeR.position.x = 0.18;
+  grp.add(gEyeL, gEyeR);
+  const gLight = new THREE.PointLight(0xff3030, 0.8, 4);
+  gLight.position.y = 1.6;
+  grp.add(gLight);
+  grp.visible = false;
+  scene.add(grp);
+  return { mesh:grp, mat, active:false, spawnTimer:0 };
+}
+
+const guardians = [createGuardian(), createGuardian()];
+
+// difficulty scaling by era index AND time of day: nights are more dangerous
+function guardianSpeedFor(idx){
+  const night = window.__nightFactor || 0;
+  return 3.2 + idx*0.45 + night*1.6;
+}
+function guardianSpawnDelayFor(idx){
+  const night = window.__nightFactor || 0;
+  return Math.max(2.5, 9 - idx*0.9 - night*4);
+}
+function guardianCountFor(idx){
+  const night = window.__nightFactor || 0;
+  const base = idx >= 4 ? 2 : 1;
+  return (night > 0.6 && base < 2) ? 2 : base;
+}
+
+function resetEraTimer(){
+  eraTimeLeft = orbData[currentEra].time;
+  guardians.forEach(gd => {
+    gd.active = false;
+    gd.spawnTimer = 0;
+    gd.mesh.visible = false;
+  });
+}
+
+function showEraBanner(name){
+  eraNameText.textContent = name;
+  eraBanner.classList.add('show');
+  setTimeout(() => eraBanner.classList.remove('show'), 2600);
+}
+
+showEraBanner(orbData[0].era);
+resetEraTimer();
+
+// ---------- PLAYER: cartoon humanoid ----------
+const player = new THREE.Group();
+const skinMat = new THREE.MeshStandardMaterial({ color:0xd8a878, roughness:0.7 });
+const clothMat = new THREE.MeshStandardMaterial({ color:0x35303f, roughness:0.85 });
+const hoodMat = new THREE.MeshStandardMaterial({ color:0x201c28, roughness:0.9 });
+
+// torso
+const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 0.55, 4, 8), clothMat);
+torso.position.y = 1.0;
+torso.castShadow = true;
+player.add(torso);
+
+// head + simple cartoon face
+const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10), skinMat);
+head.position.y = 1.62;
+head.castShadow = true;
+player.add(head);
+const eyeGeo = new THREE.SphereGeometry(0.035, 6, 6);
+const eyeMat = new THREE.MeshBasicMaterial({ color:0x1a1a1a });
+const eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(-0.09, 1.65, 0.23);
+const eyeR = eyeL.clone(); eyeR.position.x = 0.09;
+player.add(eyeL, eyeR);
+
+// hood (cartoon cloak over shoulders + head)
+const hood = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.55, 10, 1, true), hoodMat);
+hood.position.y = 1.68;
+hood.castShadow = true;
+player.add(hood);
+const shoulderCape = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.9, 8, 1, true), hoodMat);
+shoulderCape.position.y = 1.05;
+shoulderCape.castShadow = true;
+player.add(shoulderCape);
+
+// arms (pivoted at shoulder so they can swing)
+const armGeo = new THREE.CylinderGeometry(0.09, 0.08, 0.55, 8);
+function makeLimb(mat, geo, offsetY){
+  const pivot = new THREE.Group();
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.y = offsetY;
+  mesh.castShadow = true;
+  pivot.add(mesh);
+  return pivot;
+}
+const armPivotL = makeLimb(skinMat, armGeo, -0.27);
+armPivotL.position.set(-0.42, 1.28, 0);
+player.add(armPivotL);
+const armPivotR = makeLimb(skinMat, armGeo, -0.27);
+armPivotR.position.set(0.42, 1.28, 0);
+player.add(armPivotR);
+
+// legs (pivoted at hip)
+const legGeo = new THREE.CylinderGeometry(0.11, 0.1, 0.65, 8);
+const legMat = new THREE.MeshStandardMaterial({ color:0x282430, roughness:0.85 });
+const legPivotL = makeLimb(legMat, legGeo, -0.32);
+legPivotL.position.set(-0.16, 0.68, 0);
+player.add(legPivotL);
+const legPivotR = makeLimb(legMat, legGeo, -0.32);
+legPivotR.position.set(0.16, 0.68, 0);
+player.add(legPivotR);
+
+const eyeGlow = new THREE.PointLight(0x9fe8d8, 0.25, 2);
+eyeGlow.position.set(0, 1.62, 0.3);
+player.add(eyeGlow);
+
+player.position.set(0, 0, 0);
+scene.add(player);
+
+// ---------- CONTROLS ----------
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.code] = true; });
+window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+let camYaw = Math.PI;
+let camPitch = 0.35;
+let isDragging = false;
+let lastX = 0, lastY = 0;
+
+renderer.domElement.addEventListener('mousedown', e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+window.addEventListener('mouseup', () => isDragging = false);
+window.addEventListener('mousemove', e => {
+  if(!isDragging) return;
+  const dx = e.clientX - lastX;
+  const dy = e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  camYaw -= dx * 0.005;
+  camPitch = Math.max(0.05, Math.min(1.2, camPitch - dy * 0.004));
+});
+// touch support
+renderer.domElement.addEventListener('touchstart', e => { isDragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }, {passive:true});
+renderer.domElement.addEventListener('touchmove', e => {
+  if(!isDragging) return;
+  const dx = e.touches[0].clientX - lastX;
+  const dy = e.touches[0].clientY - lastY;
+  lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+  camYaw -= dx * 0.005;
+  camPitch = Math.max(0.05, Math.min(1.2, camPitch - dy * 0.004));
+}, {passive:true});
+window.addEventListener('touchend', () => isDragging = false);
+
+let velocityY = 0;
+let grounded = true;
+const camDistance = 6;
+let walkCycle = 0;
+
+function updatePlayer(delta){
+  if(inTransition || lives <= 0){
+    return;
+  }
+  const forward = new THREE.Vector3(Math.sin(camYaw), 0, Math.cos(camYaw));
+  const right = new THREE.Vector3(Math.sin(camYaw + Math.PI/2), 0, Math.cos(camYaw + Math.PI/2));
+
+  const move = new THREE.Vector3();
+  if(keys['KeyW'] || keys['ArrowUp']) move.add(forward);
+  if(keys['KeyS'] || keys['ArrowDown']) move.sub(forward);
+  if(keys['KeyA'] || keys['ArrowLeft']) move.sub(right);
+  if(keys['KeyD'] || keys['ArrowRight']) move.add(right);
+
+  if(move.lengthSq() > 0){
+    move.normalize();
+    const speed = 7;
+    player.position.addScaledVector(move, speed * delta);
+    const targetAngle = Math.atan2(move.x, move.z);
+    let diff = targetAngle - player.rotation.y;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+    player.rotation.y += diff * Math.min(1, 10*delta);
+    walkCycle += delta * 9;
+  } else {
+    walkCycle *= 0.9; // ease limbs back to neutral when idle
+  }
+  const swing = Math.sin(walkCycle) * 0.6;
+  armPivotL.rotation.x = swing;
+  armPivotR.rotation.x = -swing;
+  legPivotL.rotation.x = -swing;
+  legPivotR.rotation.x = swing;
+
+  if((keys['Space']) && grounded){
+    velocityY = 5.5;
+    grounded = false;
+  }
+  velocityY -= 14 * delta;
+  player.position.y += velocityY * delta;
+  if(player.position.y <= 0){ player.position.y = 0; velocityY = 0; grounded = true; }
+
+  // world bounds
+  const maxR = 140;
+  const r = Math.sqrt(player.position.x**2 + player.position.z**2);
+  if(r > maxR){
+    player.position.x *= maxR/r;
+    player.position.z *= maxR/r;
+  }
+
+  // camera follow
+  const camOffset = new THREE.Vector3(
+    Math.sin(camYaw) * -camDistance * Math.cos(camPitch),
+    camDistance * Math.sin(camPitch) + 1.5,
+    Math.cos(camYaw) * -camDistance * Math.cos(camPitch)
+  );
+  const desiredCamPos = player.position.clone().add(camOffset);
+  camera.position.lerp(desiredCamPos, 1 - Math.pow(0.001, delta));
+  const lookTarget = player.position.clone().add(new THREE.Vector3(0, 1.4, 0));
+  camera.lookAt(lookTarget);
+}
+
+// ---------- COLLECTION LOGIC ----------
+let collectedCount = 0;
+const factBox = document.getElementById('factText');
+const factBoxEl = document.getElementById('fact-box');
+let factTimeout = null;
+
+function checkOrbCollection(){
+  if(inTransition) return;
+  const o = orbs[currentEra];
+  if(!o || o.collected) return;
+  const d = player.position.distanceTo(o.mesh.position);
+  if(d < 1.8){
+    o.collected = true;
+    o.mesh.visible = false;
+    collectedCount++;
+    document.getElementById('orbCount').textContent = `${collectedCount} / ${orbs.length}`;
+    factBox.textContent = o.fact;
+    factBoxEl.classList.add('show');
+    clearTimeout(factTimeout);
+    factTimeout = setTimeout(() => factBoxEl.classList.remove('show'), 5000);
+
+    if(collectedCount === orbs.length){
+      guardians.forEach(gd => gd.mesh.visible = false);
+      setTimeout(() => {
+        document.getElementById('endscreen').classList.add('show');
+      }, 1200);
+    } else {
+      startPortalTransition();
+    }
+  }
+}
+
+// ---------- PORTAL TRANSITION (time travel between eras) ----------
+const portalFlash = document.getElementById('portalFlash');
+
+function lerpColor(c1, c2, t){
+  const col1 = new THREE.Color(c1), col2 = new THREE.Color(c2);
+  return col1.lerp(col2, t);
+}
+
+function startPortalTransition(){
+  inTransition = true;
+  const fromEra = orbData[currentEra];
+  const nextEra = currentEra + 1;
+  const toEra = orbData[nextEra];
+
+  // flash effect
+  let flashT = 0;
+  const flashDuration = 0.9;
+  function flashStep(){
+    flashT += 0.03;
+    const p = Math.min(flashT/flashDuration, 1);
+    portalFlash.style.opacity = p < 0.5 ? (p*2) : (1-(p-0.5)*2);
+    if(p < 1){ requestAnimationFrame(flashStep); }
+  }
+  flashStep();
+
+  // color tween over 1.4s
+  const duration = 1400;
+  const start = performance.now();
+  const fromFog = eraFogColor.clone();
+  const fromGround = eraGroundColor.clone();
+  const fromTorch = eraLight.color.clone();
+
+  function tween(){
+    const now = performance.now();
+    const t = Math.min((now - start)/duration, 1);
+    eraFogColor.copy(fromFog).lerp(new THREE.Color(toEra.fog), t);
+    eraGroundColor.copy(fromGround).lerp(new THREE.Color(toEra.ground), t);
+    eraLight.color.copy(fromTorch).lerp(new THREE.Color(toEra.torch), t);
+    if(t < 1){ requestAnimationFrame(tween); }
+  }
+  tween();
+
+  setTimeout(() => {
+    // teleport player near new orb
+    const targetPos = orbs[nextEra].mesh.position;
+    const angle = Math.random()*Math.PI*2;
+    player.position.set(targetPos.x + Math.cos(angle)*4, 0, targetPos.z + Math.sin(angle)*4);
+    spawnPoint.copy(player.position);
+    orbs[nextEra].mesh.visible = true;
+    currentEra = nextEra;
+    resetEraTimer();
+    guardians.forEach(gd => {
+      gd.mat.color.set(toEra.guardian);
+      gd.mat.emissive.set(toEra.guardian);
+    });
+    showEraBanner(toEra.era);
+    inTransition = false;
+  }, 900);
+}
+
+// ---------- LIVES / GUARDIAN LOGIC ----------
+function loseLife(){
+  lives--;
+  renderHearts();
+  if(lives <= 0){
+    document.getElementById('gameover').classList.add('show');
+    inTransition = true;
+  } else {
+    // knock player back to era spawn point, reset timer & guardian
+    player.position.copy(spawnPoint);
+    resetEraTimer();
+    portalFlash.style.background = '#ff3030';
+    portalFlash.style.opacity = 0.5;
+    setTimeout(() => { portalFlash.style.opacity = 0; portalFlash.style.background = '#fff2c8'; }, 350);
+  }
+}
+
+function updateGuardian(delta){
+  if(inTransition) return;
+  const speed = guardianSpeedFor(currentEra);
+  const spawnDelay = guardianSpawnDelayFor(currentEra);
+  const activeCount = guardianCountFor(currentEra);
+
+  guardians.forEach((gd, gi) => {
+    if(gi >= activeCount){ gd.mesh.visible = false; gd.active = false; return; }
+
+    if(!gd.active){
+      gd.spawnTimer += delta;
+      const delay = spawnDelay + gi*3; // stagger the second guardian
+      if(gd.spawnTimer >= delay){
+        gd.active = true;
+        gd.mesh.visible = true;
+        const angle = Math.random()*Math.PI*2;
+        gd.mesh.position.set(
+          player.position.x + Math.cos(angle)*16,
+          0,
+          player.position.z + Math.sin(angle)*16
+        );
+      }
+      return;
+    }
+
+    const dir = new THREE.Vector3().subVectors(player.position, gd.mesh.position);
+    dir.y = 0;
+    const dist = dir.length();
+    if(dist > 0.01){
+      dir.normalize();
+      gd.mesh.position.addScaledVector(dir, speed*delta);
+      gd.mesh.rotation.y = Math.atan2(dir.x, dir.z);
+    }
+    gd.mesh.position.y = Math.sin(performance.now()*0.004 + gi)*0.15 + 0.1;
+
+    if(dist < 1.5){
+      gd.active = false;
+      gd.mesh.visible = false;
+      loseLife();
+    }
+  });
+}
+
+// ---------- ERA TIMER ----------
+function updateEraTimer(delta){
+  if(inTransition || collectedCount === orbs.length) return;
+  eraTimeLeft -= delta;
+  const maxTime = orbData[currentEra].time;
+  const pct = Math.max(0, eraTimeLeft/maxTime) * 100;
+  eraTimerFill.style.width = pct + '%';
+  if(pct < 25){
+    eraTimerFill.style.background = 'linear-gradient(90deg,#d85a5a,#d8a05a)';
+  } else {
+    eraTimerFill.style.background = 'linear-gradient(90deg,#9fd8d8,#d8c48a)';
+  }
+  if(eraTimeLeft <= 0){
+    eraTimeLeft = orbData[currentEra].time;
+    loseLife();
+  }
+}
+
+// ---------- ANIMATION LOOP ----------
+const clock = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const delta = Math.min(clock.getDelta(), 0.05);
+  const t = clock.getElapsedTime();
+
+  updatePlayer(delta);
+  eraLight.position.set(player.position.x, 4, player.position.z);
+  skyDome.position.copy(camera.position);
+  mist.position.x = player.position.x;
+  mist.position.z = player.position.z;
+  clouds.forEach(c => { c.sprite.position.x += c.speed*delta; if(c.sprite.position.x > 160) c.sprite.position.x = -160; });
+  checkOrbCollection();
+  updateGuardian(delta);
+  updateEraTimer(delta);
+  updateDayNight(t);
+
+  // torch flicker
+  torches.forEach(tr => {
+    tr.light.intensity = tr.base + Math.sin(t*8 + tr.phase)*0.4 + Math.sin(t*23+tr.phase)*0.15;
+  });
+
+  // orb bob + rotate
+  orbs.forEach(o => {
+    if(o.collected) return;
+    o.mesh.position.y = o.baseY + Math.sin(t*2 + o.mesh.position.x)*0.15;
+    o.mesh.rotation.y += delta * 0.8;
+  });
+
+  // fireflies float
+  const posAttr = fireflyGeo.attributes.position;
+  for(let i=0;i<fireflyCount;i++){
+    let y = posAttr.getY(i) + speeds[i]*delta*0.3;
+    if(y > 5) y = 0.2;
+    posAttr.setY(i, y);
+    posAttr.setX(i, posAttr.getX(i) + Math.sin(t + i)*delta*0.15);
+  }
+  posAttr.needsUpdate = true;
+
+  renderer.render(scene, camera);
+}
+
+// initial camera position
+camera.position.set(0, 3, 8);
+camera.lookAt(0,1,0);
+animate();
+
+// ---------- UI ----------
+document.getElementById('startBtn').addEventListener('click', () => {
+  document.getElementById('overlay').classList.add('hidden');
+});
+document.getElementById('retryBtn').addEventListener('click', () => {
+  location.reload();
+});
+</script>
+</body>
+</html>
