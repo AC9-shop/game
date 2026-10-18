@@ -34,7 +34,7 @@ h1::after{content:"";display:block;width:90px;height:3px;margin:10px auto 0;bord
 .w{cursor:pointer;border-radius:5px;padding:0 1px;transition:background .2s,transform .2s,color .2s;display:inline-block}
 .w:hover{background:var(--sv);transform:translateY(-2px) scale(1.06)}
 .w.sv{background:var(--sv);box-shadow:inset 0 -2px var(--gold)}
-.w.pop{animation:pop .7s}
+.ph{background:var(--sv);box-shadow:inset 0 -2px var(--gold);border-radius:5px;padding:0 1px;cursor:pointer;transition:background .2s;-webkit-box-decoration-break:clone;box-decoration-break:clone}.ph:hover{filter:brightness(1.1)}.ph.pop{animation:pop .7s;display:inline-block}.w.pop{animation:pop .7s}
 @keyframes pop{30%{transform:scale(1.5) rotate(-3deg);background:var(--gold);color:#000}}
 .hide-fr .fr,.hide-ar .ar,.hide-fr2 .fr2{display:none}
 nav.b{display:flex;justify-content:space-between;gap:8px;margin-top:24px;flex-wrap:wrap}
@@ -100,8 +100,21 @@ BOOK.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textCo
 const norm=(t,lang)=>{let w=t.replace(/^[^\p{L}\p{M}]+|[^\p{L}\p{M}]+$/gu,'');if(lang==='fr'){const p=w.split(/[’']/);w=p[p.length-1]||w;w=w.toLowerCase()}return w};
 const key=(ch,lang,w)=>ch+'|'+lang+'|'+w;
 const has=(ch,lang,w)=>S.lex.some(x=>x.k===key(ch,lang,w));
-function words(t,lang){return t.split(' ').map(tok=>{const w=norm(tok,lang);return w?'<span class="w'+(has(S.ch,lang,w)?' sv':'')+'" data-l="'+lang+'" data-w="'+esc(w)+'">'+esc(tok)+'</span>':esc(tok)}).join(' ')}
+const pn=(s,lang)=>{const w=s.replace(/^[^\p{L}\p{M}]+|[^\p{L}\p{M}]+$/gu,'');return lang==='fr'?w.toLowerCase():w};
+let PC={};
+function phrasesFor(lang){return PC[lang]||(PC[lang]=S.lex.filter(x=>x.ch===S.ch&&x.lang===lang&&x.w.includes(' ')).map(x=>({w:x.w,t:x.w.split(' ').map(y=>pn(y,lang))})).sort((p,q)=>q.t.length-p.t.length))}
+function words(t,lang){
+ const tk=t.split(' '),P=phrasesFor(lang),out=[];
+ for(let i=0;i<tk.length;){
+  const m=P.find(p=>p.t.every((z,j)=>i+j<tk.length&&pn(tk[i+j],lang)===z));
+  if(m){out.push('<span class="ph" data-l="'+lang+'" data-w="'+esc(m.w)+'">'+esc(tk.slice(i,i+m.t.length).join(' '))+'</span>');i+=m.t.length;continue}
+  const tok=tk[i++],w=norm(tok,lang);
+  out.push(w?'<span class="w'+(has(S.ch,lang,w)?' sv':'')+'" data-l="'+lang+'" data-w="'+esc(w)+'">'+esc(tok)+'</span>':esc(tok));
+ }
+ return out.join(' ');
+}
 function render(){
+ PC={};
  const c=BOOK[S.ch];$('ch').value=S.ch;$('cnt').textContent=S.lex.length;
  let h='<h1>'+c.fr_title+' — '+c.ar_title+'</h1><div class="tl" style="text-align:center">Touche un mot pour l’ajouter à ton lexique</div>';
  const N=c.segs.length,p=Math.min(S.pos[S.ch]||0,N),end=p>=N;
@@ -122,6 +135,8 @@ function render(){
  mark(S.pos[S.ch]||0,true);
 }
 $('m').addEventListener('click',e=>{
+ const ph=e.target.closest('.ph');
+ if(ph&&!getSelection().toString().trim()){openPhrase(ph);return}
  const w=e.target.closest('.w');
  if(w){if(/\s/.test(getSelection().toString().trim()))return;openWord(w);return}
  const sg=e.target.closest('.seg');if(sg)mark(+sg.dataset.i);
@@ -155,6 +170,12 @@ function sentenceOf(seg,lang,tok){
 function openWord(el){
  const lang=el.dataset.l,w=el.dataset.w,i=+el.closest('.seg').dataset.i,seg=BOOK[S.ch].segs[i];
  openEntry(lang,w,sentenceOf(seg,lang,w));
+}
+function openPhrase(el){
+ const lang=el.dataset.l,w=el.dataset.w,seg=BOOK[S.ch].segs[+el.closest('.seg').dataset.i],T=lang==='ar'?seg.ar:seg.fr;
+ const ex=S.lex.find(x=>x.k===key(S.ch,lang,w));
+ const sent=(ex&&ex.s)||T.split(/(?<=[.!?؟…»])\s+/).find(y=>y.toLowerCase().includes(w.toLowerCase()))||T.slice(0,220);
+ openEntry(lang,w,sent);
 }
 function openEntry(lang,w,sent){
  const k=key(S.ch,lang,w),ex=S.lex.find(x=>x.k===k);
@@ -208,7 +229,7 @@ function addW(){
  const ex=S.lex.find(x=>x.k===c.k);
  if(ex)ex.n=n;else S.lex.push({k:c.k,ch:S.ch,lang:c.lang,w:c.w,s:c.sent,n,t:Date.now()});
  save();hide();render();
- document.querySelectorAll('.w').forEach(e=>{if(e.dataset.w===c.w&&e.dataset.l===c.lang)e.classList.add('pop')});
+ document.querySelectorAll('.w,.ph').forEach(e=>{if(e.dataset.w===c.w&&e.dataset.l===c.lang)e.classList.add('pop')});
 }
 function delW(k){S.lex=S.lex.filter(x=>x.k!==k);save();hide();render()}
 $('blx').onclick=()=>{
