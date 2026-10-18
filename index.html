@@ -2,50 +2,81 @@
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>La Boîte à merveilles – FR / AR / FR</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#faf7f0;--fg:#222;--mut:#8a8478;--card:#fff;--acc:#b5651d;--bd:#e6dfd0;--sv:#ffe9a8}
-@media(prefers-color-scheme:dark){:root:not([data-t=light]){--bg:#16150f;--fg:#e8e4d8;--mut:#8c8778;--card:#1f1e17;--acc:#e0a060;--bd:#333126;--sv:#5a4a14}}
-:root[data-t=dark]{--bg:#16150f;--fg:#e8e4d8;--mut:#8c8778;--card:#1f1e17;--acc:#e0a060;--bd:#333126;--sv:#5a4a14}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:Georgia,"Times New Roman",serif;line-height:1.7}
-header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--bd);padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center}
-select,button,input{font:inherit;font-size:14px;padding:6px 10px;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:8px;cursor:pointer}
-input{cursor:text;width:100%}
-button.on,button.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
-main{max-width:760px;margin:0 auto;padding:16px 14px 80px}
-h1{text-align:center;font-size:1.3em;margin:10px 0 20px;color:var(--acc)}
-.seg{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:6px 16px;margin:0 0 16px;scroll-margin-top:90px}
-.seg.cur{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
-.fr{font-size:var(--fs);margin:10px 0}
-.fr2{font-size:var(--fs);margin:10px 0;color:var(--mut);font-style:italic}
-.ar{font-size:calc(var(--fs)*1.25);direction:rtl;text-align:right;font-family:"Amiri","Noto Naskh Arabic","Traditional Arabic","Geeza Pro",Tahoma,serif;line-height:2;margin:10px 0;padding:8px 12px;border-right:3px solid var(--acc);background:color-mix(in srgb,var(--acc) 7%,transparent);border-radius:6px}
-.w{cursor:pointer;border-radius:3px}.w:hover{background:var(--sv)}.w.sv{background:var(--sv);border-bottom:2px solid var(--acc)}
+:root{--bg:#f6efe0;--fg:#2a2118;--mut:#8b7d68;--card:#fffaf0;--acc:#0f6b74;--gold:#c8962e;--bd:#e5d8bc;--sv:#ffe08a;--glass:rgba(246,239,224,.82);--sh:0 8px 30px rgba(60,40,10,.12);--pat:rgba(15,107,116,.07)}
+@media(prefers-color-scheme:dark){:root:not([data-t=light]){--bg:#0d1b2a;--fg:#ece4d0;--mut:#8f9bab;--card:#14263a;--acc:#3fb8c4;--gold:#e5b94e;--bd:#233a52;--sv:#6b5413;--glass:rgba(13,27,42,.82);--sh:0 8px 30px rgba(0,0,0,.4);--pat:rgba(229,185,78,.06)}}
+:root[data-t=dark]{--bg:#0d1b2a;--fg:#ece4d0;--mut:#8f9bab;--card:#14263a;--acc:#3fb8c4;--gold:#e5b94e;--bd:#233a52;--sv:#6b5413;--glass:rgba(13,27,42,.82);--sh:0 8px 30px rgba(0,0,0,.4);--pat:rgba(229,185,78,.06)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--fg);font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;font-weight:500;line-height:1.7;background-color:var(--bg);
+ background-image:conic-gradient(from 45deg at 50% 50%,var(--pat) 0 25%,transparent 0 50%,var(--pat) 0 75%,transparent 0);background-size:56px 56px;animation:drift 60s linear infinite}
+@keyframes drift{to{background-position:560px 560px}}
+header{position:sticky;top:0;z-index:5;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--bd);padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top,0px));display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;animation:down .7s cubic-bezier(.2,.9,.3,1) both}
+@keyframes down{from{transform:translateY(-100%);opacity:0}}
+select,button,input{font:inherit;font-size:15px;padding:6px 12px;border:1px solid var(--bd);background:var(--card);color:var(--fg);border-radius:999px;cursor:pointer;transition:transform .18s,box-shadow .18s,background .2s,color .2s}
+button:hover,select:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+button:active{transform:scale(.93)}
+input{cursor:text;width:100%;border-radius:12px;padding:10px 14px}
+input:focus,select:focus{outline:2px solid var(--gold);outline-offset:2px}
+button.on,button.pri{background:linear-gradient(135deg,var(--acc),color-mix(in srgb,var(--acc) 60%,var(--gold)));color:#fff;border-color:transparent;box-shadow:0 3px 10px color-mix(in srgb,var(--acc) 40%,transparent)}
+main{max-width:780px;margin:0 auto;padding:16px 14px 90px}
+h1{text-align:center;font-size:2em;margin:22px 0 6px;color:var(--acc);letter-spacing:.02em;animation:rise .9s cubic-bezier(.2,.9,.3,1) both}
+h1::after{content:"";display:block;width:90px;height:3px;margin:10px auto 0;border-radius:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:grow 1.2s .3s both}
+@keyframes grow{from{width:0;opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}}
+.seg{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:6px 20px;margin:0 0 20px;scroll-margin-top:90px;box-shadow:var(--sh);opacity:0;transform:translateY(34px) scale(.98);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.9,.3,1),border-color .3s,box-shadow .3s}
+.seg.in{opacity:1;transform:none}
+.seg.cur{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),var(--sh)}
+.fr{font-size:var(--fs);margin:12px 0}
+.fr2{font-size:var(--fs);margin:12px 0;color:var(--mut);font-style:italic}
+.ar{font-size:calc(var(--fs)*1.25);direction:rtl;text-align:right;font-family:"Amiri","Noto Naskh Arabic","Traditional Arabic","Geeza Pro",Tahoma,serif;font-weight:400;line-height:2.1;margin:12px 0;padding:10px 16px;border-right:4px solid var(--gold);background:linear-gradient(270deg,color-mix(in srgb,var(--gold) 14%,transparent),transparent);border-radius:10px}
+.w{cursor:pointer;border-radius:5px;padding:0 1px;transition:background .2s,transform .2s,color .2s;display:inline-block}
+.w:hover{background:var(--sv);transform:translateY(-2px) scale(1.06)}
+.w.sv{background:var(--sv);box-shadow:inset 0 -2px var(--gold)}
+.w.pop{animation:pop .7s}
+@keyframes pop{30%{transform:scale(1.5) rotate(-3deg);background:var(--gold);color:#000}}
 .hide-fr .fr,.hide-ar .ar,.hide-fr2 .fr2{display:none}
 nav.b{display:flex;justify-content:space-between;gap:8px;margin-top:24px;flex-wrap:wrap}
-#prog{position:fixed;left:0;top:0;height:3px;background:var(--acc);width:0;z-index:99}
-.fin{text-align:center;padding:20px;border:2px dashed var(--acc);border-radius:12px;margin-top:20px}
-.fin button{font-size:17px;padding:10px 20px}
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:none;align-items:flex-end;justify-content:center}
-.ov.show{display:flex}
-.sheet{background:var(--bg);width:100%;max-width:640px;max-height:88vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px))}
-.sheet h2{margin:0 0 6px;font-size:1.4em;color:var(--acc)}
-.sheet .sent{color:var(--mut);margin:6px 0 12px;font-size:15px}
-.row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.row>*{flex:1}
-.lx{border-bottom:1px solid var(--bd);padding:8px 0;display:flex;gap:8px;justify-content:space-between}
-.lx b{font-size:1.1em}.lx small{display:block;color:var(--mut)}
-.card{font-size:calc(var(--fs) + 2px);text-align:center;padding:24px 8px;min-height:140px}
-.card.ar{direction:rtl;font-family:"Amiri","Noto Naskh Arabic",Tahoma,serif}
-.bl{color:var(--acc);font-weight:bold}
-.tl{font-size:12px;color:var(--mut);margin:4px 0}
-</style></head><body>
+#prog{position:fixed;left:0;top:0;height:4px;background:linear-gradient(90deg,var(--acc),var(--gold));width:0;z-index:99;transition:width .15s;box-shadow:0 0 10px var(--gold)}
+.fin{text-align:center;padding:26px;border:2px dashed var(--gold);border-radius:22px;margin-top:24px;background:var(--card);animation:glow 3s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 28px color-mix(in srgb,var(--gold) 45%,transparent)}}
+.fin button{font-size:19px;padding:12px 24px}
+.ov{position:fixed;inset:0;background:rgba(5,10,18,.55);backdrop-filter:blur(4px);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.ov.show{display:flex;animation:fade .25s}
+@keyframes fade{from{opacity:0}}
+.sheet{background:var(--bg);width:100%;max-width:660px;max-height:88vh;overflow:auto;border-radius:26px 26px 0 0;padding:22px 20px calc(20px + env(safe-area-inset-bottom,0px));border-top:3px solid var(--gold);animation:up .4s cubic-bezier(.2,.9,.3,1)}
+@keyframes up{from{transform:translateY(100%)}}
+.sheet h2{margin:0 0 6px;font-size:1.7em;color:var(--acc)}
+.sheet .sent{color:var(--mut);margin:6px 0 12px;font-size:17px}
+.row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.row>*{flex:1}
+.lx{border-bottom:1px solid var(--bd);padding:8px 0;display:flex;gap:8px;justify-content:space-between;animation:rise .5s both}
+.lx b{font-size:1.2em}.lx small{display:block;color:var(--mut)}
+.card{font-size:calc(var(--fs) + 3px);text-align:center;padding:30px 10px;min-height:150px;animation:flip .55s cubic-bezier(.2,.9,.3,1);transform-origin:center}
+@keyframes flip{from{opacity:0;transform:perspective(600px) rotateX(-70deg)}}
+.card.ar{direction:rtl;font-family:"Amiri","Noto Naskh Arabic",Tahoma,serif;border:0;background:none}
+.bl{color:var(--gold);font-weight:700;animation:pulse 1.6s infinite}
+@keyframes pulse{50%{opacity:.5}}
+.tl{font-size:13px;color:var(--mut);margin:4px 0}
+body:has(.fbar) main{padding-bottom:110px}
+.fbar{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--gold);border-radius:999px;padding:6px 12px;box-shadow:var(--sh);z-index:6;font-size:15px}
+.fbar button{font-size:22px;padding:2px 16px;line-height:1.2}
+.seg.fsR{animation:inR .45s cubic-bezier(.2,.9,.3,1)}.seg.fsL{animation:inL .45s cubic-bezier(.2,.9,.3,1)}
+@keyframes inR{from{opacity:0;transform:translateX(60px)}}@keyframes inL{from{opacity:0;transform:translateX(-60px)}}
+.seg.fs,.seg.fsR,.seg.fsL{margin-top:8px}
+#selbar{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);opacity:0;pointer-events:none;z-index:40;font-size:16px;padding:10px 18px;max-width:92vw;transition:all .3s cubic-bezier(.2,.9,.3,1)}#selbar.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.seg{opacity:1;transform:none}}
+</style>
+</head><body>
 <div id="prog"></div>
 <header>
 <select id="ch"></select>
 <button id="bfr" class="on">FR</button><button id="bar" class="on">AR</button><button id="bfr2" class="on">FR 2</button>
 <button id="sm">A−</button><button id="bg">A+</button><button id="th">🌓</button>
-<button id="blx">📒 <span id="cnt">0</span></button><button id="bacc">👤</button>
+<button id="bfo" title="Mode focus">🎯</button><button id="blx">📒 <span id="cnt">0</span></button><button id="bacc">👤</button>
 </header>
 <main id="m"></main>
+<button id="selbar" class="pri"></button>
 <div class="ov" id="ov"><div class="sheet" id="sh"></div></div>
 <script>
 // === Google login (Firebase): colle ta config ici, sinon la sauvegarde reste locale ===
@@ -73,30 +104,45 @@ function words(t,lang){return t.split(' ').map(tok=>{const w=norm(tok,lang);retu
 function render(){
  const c=BOOK[S.ch];$('ch').value=S.ch;$('cnt').textContent=S.lex.length;
  let h='<h1>'+c.fr_title+' — '+c.ar_title+'</h1><div class="tl" style="text-align:center">Touche un mot pour l’ajouter à ton lexique</div>';
- c.segs.forEach((s,i)=>{h+='<section class="seg" data-i="'+i+'"><div class="fr">'+words(s.fr,'fr')+'</div><div class="ar">'+words(s.ar,'ar')+'</div><div class="fr2">'+words(s.fr,'fr')+'</div></section>'});
+ const N=c.segs.length,p=Math.min(S.pos[S.ch]||0,N),end=p>=N;
+ const segH=i=>{const s=c.segs[i];return '<section class="seg'+(S.focus?' in fs'+(window._dir||''):'')+'" data-i="'+i+'"><div class="fr">'+words(s.fr,'fr')+'</div><div class="ar">'+words(s.ar,'ar')+'</div><div class="fr2">'+words(s.fr,'fr')+'</div></section>'};
+ if(S.focus){if(!end)h+=segH(p);h+='<div class="fbar"><button onclick="fgo(-1)">‹</button><span>'+Math.min(p+1,N)+' / '+N+'</span><button onclick="fgo(1)">›</button></div>'}
+ else c.segs.forEach((s,i)=>{h+=segH(i)});
  const n=S.lex.filter(x=>x.ch===S.ch).length;
- h+='<div class="fin"><p>Fin du chapitre — '+n+' mot(s) dans ton lexique'+(S.done[S.ch]?' ✓ révisé':'')+'</p><button class="pri" onclick="review('+S.ch+')">✅ J’ai fini · Réviser les mots</button></div>';
- h+='<nav class="b"><button onclick="go(-1)">← Précédent</button><button onclick="go(1)">Suivant →</button></nav>';
+ if(!S.focus||end)h+='<div class="fin"><p>Fin du chapitre — '+n+' mot(s) dans ton lexique'+(S.done[S.ch]?' ✓ révisé':'')+'</p><button class="pri" onclick="review('+S.ch+')">✅ J’ai fini · Réviser les mots</button></div>';
+ if(!S.focus||end)h+='<nav class="b"><button onclick="go(-1)">← Précédent</button><button onclick="go(1)">Suivant →</button></nav>';
  $('m').innerHTML=h;
  document.documentElement.style.setProperty('--fs',S.fs+'px');
  $('m').className=(S.fr?'':'hide-fr ')+(S.ar?'':'hide-ar ')+(S.fr2?'':'hide-fr2');
- ['fr','ar','fr2'].forEach(k=>$('b'+k).classList.toggle('on',!!S[k]));
+ ['fr','ar','fr2'].forEach(k=>$('b'+k).classList.toggle('on',!!S[k]));$('bfo').classList.toggle('on',!!S.focus);if(S.focus){const N=c.segs.length;$('prog').style.width=(100*Math.min(p,N)/N)+'%'}
  if(S.t)document.documentElement.dataset.t=S.t;
+
+ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08});
+ document.querySelectorAll('.seg').forEach(e=>io.observe(e));
  mark(S.pos[S.ch]||0,true);
 }
 $('m').addEventListener('click',e=>{
  const w=e.target.closest('.w');
- if(w){openWord(w);return}
+ if(w){if(/\s/.test(getSelection().toString().trim()))return;openWord(w);return}
  const sg=e.target.closest('.seg');if(sg)mark(+sg.dataset.i);
 });
 function mark(i,scroll){
  S.pos[S.ch]=i;try{localStorage.setItem('boite2',JSON.stringify(S))}catch(e){}
  document.querySelectorAll('.seg').forEach(e=>e.classList.toggle('cur',+e.dataset.i===i));
  const e=document.querySelector('.seg[data-i="'+i+'"]');
- if(scroll&&e&&i>0)setTimeout(()=>e.scrollIntoView({block:'start'}),50);
- if(scroll&&i===0)scrollTo(0,0);
+ if(scroll&&!S.focus&&e&&i>0)setTimeout(()=>e.scrollIntoView({block:'start'}),50);
+ if(scroll&&!S.focus&&i===0)scrollTo(0,0);
 }
 function go(d){S.ch=Math.max(0,Math.min(BOOK.length-1,S.ch+d));S.pos[S.ch]=0;save();render();scrollTo(0,0)}
+function fgo(d){
+ const N=BOOK[S.ch].segs.length,p=Math.min(S.pos[S.ch]||0,N),np=Math.max(0,Math.min(N,p+d));
+ if(np===p)return;window._dir=d>0?'R':'L';S.pos[S.ch]=np;save();render();scrollTo(0,0);
+}
+$('bfo').onclick=()=>{S.focus=!S.focus;save();render();scrollTo(0,0)};
+let tx=null,ty=null;
+$('m').addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+$('m').addEventListener('touchend',e=>{if(!S.focus||tx===null||getSelection().toString())return;const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;tx=null;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)fgo(dx<0?1:-1)},{passive:true});
+addEventListener('keydown',e=>{if(!S.focus||$('ov').classList.contains('show')||/INPUT|SELECT/.test(document.activeElement.tagName))return;if(e.key==='ArrowRight')fgo(1);if(e.key==='ArrowLeft')fgo(-1)});
 // --- sheets
 const show=h=>{$('sh').innerHTML=h;$('ov').classList.add('show')};
 const hide=()=>$('ov').classList.remove('show');
@@ -108,8 +154,10 @@ function sentenceOf(seg,lang,tok){
 }
 function openWord(el){
  const lang=el.dataset.l,w=el.dataset.w,i=+el.closest('.seg').dataset.i,seg=BOOK[S.ch].segs[i];
+ openEntry(lang,w,sentenceOf(seg,lang,w));
+}
+function openEntry(lang,w,sent){
  const k=key(S.ch,lang,w),ex=S.lex.find(x=>x.k===k);
- const sent=sentenceOf(seg,lang,w);
  window._cur={lang,w,sent,k};
  show('<h2 '+(lang==='ar'?'dir="rtl"':'')+'>'+esc(w)+'</h2><div class="sent" '+(lang==='ar'?'dir="rtl"':'')+'>'+esc(sent)+'</div>'
  +'<input id="note" placeholder="Traduction / note (facultatif)" value="'+esc(ex?ex.n:'')+'">'
@@ -118,6 +166,30 @@ function openWord(el){
  +'<button class="pri" onclick="addW()">'+(ex?'Mettre à jour':'➕ Ajouter au lexique')+'</button></div>');
  if(!ex)fillTr();
 }
+// --- sélection d'une expression
+function selInfo(){
+ const s=getSelection();if(!s||!s.rangeCount||s.isCollapsed)return null;
+ const txt=s.toString().replace(/\s+/g,' ').trim();if(!txt)return null;
+ const n=s.anchorNode&&(s.anchorNode.nodeType===1?s.anchorNode:s.anchorNode.parentElement);
+ const blk=n&&n.closest&&n.closest('.fr,.ar,.fr2');if(!blk)return null;
+ const seg=blk.closest('.seg');return{txt,lang:blk.classList.contains('ar')?'ar':'fr',i:+seg.dataset.i};
+}
+let selT;
+document.addEventListener('selectionchange',()=>{clearTimeout(selT);selT=setTimeout(()=>{
+ const x=$('ov').classList.contains('show')?null:selInfo(),b=$('selbar');
+ if(x&&x.txt.includes(' ')){b.textContent='➕ Ajouter « '+(x.txt.length>34?x.txt.slice(0,34)+'…':x.txt)+' »';b.classList.add('show')}else b.classList.remove('show');
+},200)});
+$('selbar').addEventListener('mousedown',e=>e.preventDefault());
+$('selbar').onclick=()=>{
+ const x=selInfo();if(!x)return;
+ let w=x.txt.replace(/^[^\p{L}\p{M}]+|[^\p{L}\p{M}]+$/gu,'');if(x.lang==='fr')w=w.toLowerCase();
+ const seg=BOOK[S.ch].segs[x.i],T=x.lang==='ar'?seg.ar:seg.fr;
+ const ss=T.split(/(?<=[.!?؟…»])\s+/),lw=w.toLowerCase();
+ const sent=ss.find(y=>y.toLowerCase().includes(lw))||T.slice(0,220);
+ getSelection().removeAllRanges();$('selbar').classList.remove('show');
+ openEntry(x.lang,w,sent);
+};
+
 const TC=(()=>{try{return JSON.parse(localStorage.getItem('boiteTr')||'{}')}catch(e){return{}}})();
 async function autoTr(lang,w){
  const k=lang+'|'+w;if(TC[k])return TC[k];
@@ -136,10 +208,11 @@ function addW(){
  const ex=S.lex.find(x=>x.k===c.k);
  if(ex)ex.n=n;else S.lex.push({k:c.k,ch:S.ch,lang:c.lang,w:c.w,s:c.sent,n,t:Date.now()});
  save();hide();render();
+ document.querySelectorAll('.w').forEach(e=>{if(e.dataset.w===c.w&&e.dataset.l===c.lang)e.classList.add('pop')});
 }
 function delW(k){S.lex=S.lex.filter(x=>x.k!==k);save();hide();render()}
 $('blx').onclick=()=>{
- let h='<h2>📒 Mon lexique</h2>';
+ let h='<h2>📒 Mon lexique</h2><div class="row"><button class="pri" onclick="addForm()">➕ Ajouter un mot / une expression</button></div>';
  if(!S.lex.length)h+='<p class="sent">Vide pour l’instant.</p>';
  BOOK.forEach((c,ci)=>{
   const L=S.lex.filter(x=>x.ch===ci);if(!L.length)return;
@@ -148,6 +221,26 @@ $('blx').onclick=()=>{
  });
  show(h);
 };
+function addForm(){
+ let o='';BOOK.forEach((c,i)=>{o+='<option value="'+i+'"'+(i===S.ch?' selected':'')+'>'+c.fr_title+'</option>'});
+ show('<h2>➕ Nouveau mot</h2>'
+ +'<input id="mw" placeholder="Mot ou expression (FR ou AR)" style="margin-bottom:8px">'
+ +'<input id="mn" placeholder="Traduction (auto si vide)" style="margin-bottom:8px">'
+ +'<input id="ms" placeholder="Phrase d’exemple (facultatif)" style="margin-bottom:8px">'
+ +'<select id="mc" style="width:100%">'+o+'</select><div class="tl" id="mt"></div>'
+ +'<div class="row"><button onclick="$(\'blx\').click()">← Retour</button><button class="pri" onclick="saveManual()">Ajouter</button></div>');
+ $('mw').onblur=async()=>{const w=$('mw').value.trim();if(!w||$('mn').value)return;$('mt').textContent='⏳ traduction automatique…';try{const l=/[\u0600-\u06FF]/.test(w)?'ar':'fr';const tr=await autoTr(l,w);if(!$('mn').value){$('mn').value=tr;$('mt').textContent='✨ traduction automatique (modifiable)'}}catch(e){$('mt').textContent='Traduction auto indisponible — écris-la toi-même'}};
+}
+async function saveManual(){
+ let w=$('mw').value.trim();if(!w){$('mw').focus();return}
+ const lang=/[\u0600-\u06FF]/.test(w)?'ar':'fr';if(lang==='fr')w=w.toLowerCase();
+ let n=$('mn').value.trim();
+ if(!n){try{n=await autoTr(lang,w)}catch(e){}}
+ const ch=+$('mc').value,k=key(ch,lang,w),ex=S.lex.find(x=>x.k===k);
+ if(ex){ex.n=n||ex.n;if($('ms').value.trim())ex.s=$('ms').value.trim()}
+ else S.lex.push({k,ch,lang,w,s:$('ms').value.trim(),n,t:Date.now()});
+ save();render();$('blx').click();
+}
 // --- review
 let Q=[],qi=0,known=0,total=0,rch=0;
 function review(ch){
@@ -158,7 +251,7 @@ function review(ch){
 function card(rev){
  if(!Q.length){S.done[rch]=1;save();render();show('<h2>🎉 Chapitre terminé</h2><p>Du premier coup : <b>'+known+' / '+total+'</b></p><div class="row"><button onclick="review('+rch+')">Refaire</button><button class="pri" onclick="hide();go(1)">Chapitre suivant →</button></div>');return}
  const x=Q[0],re=new RegExp(x.w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');
- const blank=esc(x.s).replace(re,'<span class="bl">'+(rev?esc(x.w):'_____')+'</span>');
+ const blank=x.s?esc(x.s).replace(re,'<span class="bl">'+(rev?esc(x.w):'_____')+'</span>'):'<div class="tl">Traduction</div>'+esc(x.n||'?')+(rev?'<div style="margin-top:10px" class="bl">'+esc(x.w)+'</div>':'');
  show('<div class="tl">'+BOOK[rch].fr_title+' · reste '+Q.length+'</div><div class="card '+x.lang+'">'+blank+'</div>'
  +(rev?'<div class="tl" style="text-align:center">'+(x.n?esc(x.n):'')+'</div><div class="row"><button onclick="ans(0)">🔁 À revoir</button><button class="pri" onclick="ans(1)">✔ Je savais</button></div>'
  :'<div class="row"><button class="pri" onclick="card(true)">Voir la réponse</button></div>')
@@ -172,7 +265,7 @@ $('ch').onchange=e=>{S.ch=+e.target.value;save();render()};
 $('bg').onclick=()=>{S.fs=Math.min(34,S.fs+2);save();render()};
 $('sm').onclick=()=>{S.fs=Math.max(13,S.fs-2);save();render()};
 $('th').onclick=()=>{const dark=document.documentElement.dataset.t==='dark'||(!S.t&&matchMedia('(prefers-color-scheme:dark)').matches);S.t=dark?'light':'dark';save();render()};
-addEventListener('scroll',()=>{const h=document.documentElement;$('prog').style.width=(100*h.scrollTop/(h.scrollHeight-h.clientHeight||1))+'%'});
+addEventListener('scroll',()=>{if(S.focus)return;const h=document.documentElement;$('prog').style.width=(100*h.scrollTop/(h.scrollHeight-h.clientHeight||1))+'%'});
 // --- Google login + sync (Firebase)
 function ld(src){return new Promise((r,j)=>{const s=document.createElement('script');s.src=src;s.onload=r;s.onerror=j;document.head.appendChild(s)})}
 async function initFB(){
