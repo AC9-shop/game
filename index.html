@@ -71,6 +71,8 @@ body:has(.fbar) main{padding-bottom:110px}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 .fb{text-align:center;font-size:1.3em;font-weight:700;margin:10px 0;animation:pop .6s}.fb.ok{color:#2e9e5b}.fb.ko{color:#c0392b}
 .score{text-align:center;margin:10px 0}.score b{display:block;font-size:2.6em;color:var(--acc);animation:pop .8s}.score span{color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 8px}.chip{padding:3px 12px;font-size:15px}#st{margin:-6px 0 10px;font-size:15px}
+.stg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.stg div{background:var(--card);border:1px solid var(--bd);border-radius:12px;text-align:center;padding:8px}.stg b{display:block;font-size:1.6em;color:var(--acc)}.stg span{font-size:12px;color:var(--mut)}.bars{display:flex;align-items:flex-end;gap:4px;height:104px}.bc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}.bc i{width:100%;background:linear-gradient(0deg,var(--acc),var(--gold));border-radius:4px 4px 0 0;min-height:2px}.bc small{font-size:10px;color:var(--mut)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.seg{opacity:1;transform:none}}
 </style>
 </head><body>
@@ -79,7 +81,7 @@ body:has(.fbar) main{padding-bottom:110px}
 <select id="ch"></select>
 <button id="bfr" class="on">FR</button><button id="bar" class="on">AR</button><button id="bfr2" class="on">FR 2</button>
 <button id="sm">A−</button><button id="bg">A+</button><button id="th">🌓</button>
-<button id="bfo" title="Mode focus">🎯</button><button id="bvo" title="Voix">🎙️</button><button id="blx">📒 <span id="cnt">0</span></button><button id="bacc">👤</button>
+<button id="bfo" title="Mode focus">🎯</button><button id="bvo" title="Voix">🎙️</button><button id="brv" title="Réviser">🧠 <span id="dn">0</span></button><button id="bst" title="Statistiques">📊</button><button id="blx">📒 <span id="cnt">0</span></button><button id="bacc">👤</button>
 </header>
 <main id="m"></main>
 <div id="toast"></div>
@@ -101,7 +103,7 @@ const $=id=>document.getElementById(id);
 let S={eng:'',vf:'',va:'',rate:.9,ch:0,fs:19,fr:1,ar:1,fr2:1,t:'',pos:{},lex:[],done:{},ts:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem('boite2')||localStorage.getItem('boite')||'{}'))}catch(e){}
 let user=null,db=null,pushT=null;
-const save=()=>{S.ts=Date.now();try{localStorage.setItem('boite2',JSON.stringify(S))}catch(e){};$('cnt').textContent=S.lex.length;push()};
+const save=()=>{S.ts=Date.now();try{localStorage.setItem('boite2',JSON.stringify(S))}catch(e){};$('cnt').textContent=S.lex.length;try{$('dn').textContent=dueN()}catch(e){}push()};
 const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 BOOK.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.fr_title+' · '+c.ar_title;$('ch').appendChild(o)});
 const norm=(t,lang)=>{let w=t.replace(/^[^\p{L}\p{M}]+|[^\p{L}\p{M}]+$/gu,'');if(lang==='fr'){const p=w.split(/[’']/);w=p[p.length-1]||w;w=w.toLowerCase()}return w};
@@ -122,7 +124,7 @@ function words(t,lang){
 }
 function render(){
  PC={};
- const c=BOOK[S.ch];$('ch').value=S.ch;$('cnt').textContent=S.lex.length;
+ const c=BOOK[S.ch];$('ch').value=S.ch;$('cnt').textContent=S.lex.length;try{$('dn').textContent=dueN()}catch(e){}
  let h='<h1>'+c.fr_title+' — '+c.ar_title+'</h1><div class="tl" style="text-align:center">Touche un mot pour l’ajouter à ton lexique</div>';
  const N=c.segs.length,p=Math.min(S.pos[S.ch]||0,N),end=p>=N;
  const segH=i=>{const s=c.segs[i];return '<section class="seg'+(S.focus?' in fs'+(window._dir||''):'')+'" data-i="'+i+'"><div class="fr"><button class="sp" data-l="fr">🔊</button>'+words(s.fr,'fr')+'</div><div class="ar"><button class="sp" data-l="ar">🔊</button>'+words(s.ar,'ar')+'</div><div class="fr2"><button class="sp" data-l="fr">🔊</button>'+words(s.fr,'fr')+'</div></section>'};
@@ -189,14 +191,15 @@ function openPhrase(el){
 }
 function openEntry(lang,w,sent){
  const k=key(S.ch,lang,w),ex=S.lex.find(x=>x.k===k);
- window._cur={lang,w,sent,k};
- show('<h2 '+(lang==='ar'?'dir="rtl"':'')+'>'+esc(w)+'</h2><div class="sent" '+(lang==='ar'?'dir="rtl"':'')+'>'+esc(sent)+'</div>'
+ window._cur={lang,w,sent,k,alts:ex&&ex.alts,pos:ex&&ex.pos,st:ex&&ex.st};
+ const d=lang==='ar'?' dir="rtl"':'',d2=lang==='ar'?'':' dir="rtl"';
+ show('<h2'+d+'>'+esc(w)+'</h2><div class="sent"'+d+'>'+esc(sent)+'</div><div class="tl" id="st"'+d2+'>'+esc(ex&&ex.st||'')+'</div>'
  +'<input id="note" placeholder="Traduction / note (facultatif)" value="'+esc(ex?ex.n:'')+'">'
+ +'<div class="tl" id="tr">'+(ex?'':'⏳ traduction automatique…')+'</div><div id="alts">'+altsHTML(ex&&ex.alts)+'</div>'
  +'<div class="row"><button onclick="speak(_cur.w,_cur.lang)">🔊 mot</button><button onclick="speak(_cur.sent,_cur.lang)">🔊 phrase</button></div>'
- +'<div class="tl" id="tr">'+(ex?'':'⏳ traduction automatique…')+'</div>'
  +'<div class="row">'+(ex?'<button onclick="delW(\''+k.replace(/'/g,"\\'")+'\')">🗑 Retirer</button>':'')
  +'<button class="pri" onclick="addW()">'+(ex?'Mettre à jour':'➕ Ajouter au lexique')+'</button></div>');
- if(!ex)fillTr();
+ fillTr();
 }
 // --- sélection d'une expression
 function selInfo(){
@@ -231,14 +234,46 @@ async function autoTr(lang,w){
  if(!tr||/MYMEMORY|INVALID/i.test(tr))throw 0;
  TC[k]=tr;try{localStorage.setItem('boiteTr',JSON.stringify(TC))}catch(e){}return tr;
 }
-function fillTr(){
- const c=window._cur;if(!c||$('note').value)return;
- autoTr(c.lang,c.w).then(tr=>{const n=$('note');if(n&&window._cur===c&&!n.value){n.value=tr;$('tr').textContent='✨ traduction automatique (tu peux la modifier)'}}).catch(()=>{const e=$('tr');if(e)e.textContent='Traduction auto indisponible (hors ligne ?) — écris-la toi-même'});
+const POS={noun:'nom',verb:'verbe',adjective:'adjectif',adverb:'adverbe',preposition:'préposition',conjunction:'conjonction',pronoun:'pronom',interjection:'interjection',article:'article',determiner:'déterminant',particle:'particule',abbreviation:'abréviation',phrase:'locution',numeral:'numéral'};
+const saveTC=()=>{try{localStorage.setItem('boiteTr',JSON.stringify(TC))}catch(e){}};
+async function gtx(lang,q,dict){
+ const sl=lang==='ar'?'ar':'fr',tl=lang==='ar'?'fr':'ar';
+ const r=await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl='+sl+'&tl='+tl+'&dt=t'+(dict?'&dt=bd':'')+'&q='+encodeURIComponent(q));
+ if(!r.ok)throw 0;return r.json();
 }
+async function autoDict(lang,w){
+ const k='d|'+lang+'|'+w;if(TC[k])return TC[k];
+ let res;
+ try{
+  const j=await gtx(lang,w,!w.includes(' '));
+  const tr=(j[0]||[]).map(x=>x[0]).join('').trim();
+  const alts=(j[1]||[]).map(e=>({p:POS[e[0]]||e[0],t:(e[1]||[]).slice(0,5)})).filter(e=>e.t.length).slice(0,4);
+  if(!tr)throw 0;res={tr,alts};
+ }catch(e){res={tr:await autoTr(lang,w),alts:[]}}
+ TC[k]=res;saveTC();return res;
+}
+async function autoSent(lang,s){
+ const k='s|'+lang+'|'+s;if(TC[k])return TC[k];
+ const j=await gtx(lang,s,false),tr=(j[0]||[]).map(x=>x[0]).join('').trim();
+ if(!tr)throw 0;TC[k]=tr;saveTC();return tr;
+}
+const altsHTML=al=>(al||[]).map(e=>'<div class="tl">'+esc(e.p)+'</div><div class="chips">'+e.t.map(x=>'<button class="chip" data-t="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>').join('');
+function fillTr(){
+ const c=window._cur;if(!c)return;
+ autoDict(c.lang,c.w).then(r=>{
+  if(window._cur!==c)return;
+  c.alts=r.alts;c.pos=r.alts[0]?r.alts[0].p:'';
+  const n=$('note');if(n&&!n.value)n.value=r.tr;
+  const el=$('tr');if(el)el.textContent='✨ traduction automatique — touche un sens pour le choisir';
+  const al=$('alts');if(al)al.innerHTML=altsHTML(r.alts);
+ }).catch(()=>{const e=$('tr');if(e&&!$('note').value)e.textContent='Traduction auto indisponible (hors ligne ?) — écris-la toi-même'});
+ autoSent(c.lang,c.sent).then(tr=>{if(window._cur!==c)return;c.st=tr;const e=$('st');if(e)e.textContent=tr}).catch(()=>{});
+}
+$('sh').addEventListener('click',e=>{const c=e.target.closest('.chip');if(c&&$('note'))$('note').value=c.dataset.t});
 function addW(){
  const c=window._cur,n=$('note').value.trim();
  const ex=S.lex.find(x=>x.k===c.k);
- if(ex)ex.n=n;else S.lex.push({k:c.k,ch:S.ch,lang:c.lang,w:c.w,s:c.sent,n,t:Date.now()});
+ if(ex){ex.n=n;ex.alts=c.alts||ex.alts;ex.pos=c.pos||ex.pos;ex.st=c.st||ex.st}else S.lex.push({k:c.k,ch:S.ch,lang:c.lang,w:c.w,s:c.sent,n,alts:c.alts,pos:c.pos,st:c.st,t:Date.now()});
  save();hide();render();
  document.querySelectorAll('.w,.ph').forEach(e=>{if(e.dataset.w===c.w&&e.dataset.l===c.lang)e.classList.add('pop')});
 }
@@ -267,10 +302,11 @@ async function saveManual(){
  let w=$('mw').value.trim();if(!w){$('mw').focus();return}
  const lang=/[\u0600-\u06FF]/.test(w)?'ar':'fr';if(lang==='fr')w=w.toLowerCase();
  let n=$('mn').value.trim();
- if(!n){try{n=await autoTr(lang,w)}catch(e){}}
+ let dd=null;try{dd=await autoDict(lang,w)}catch(e){}
+ if(!n&&dd)n=dd.tr;
  const ch=+$('mc').value,k=key(ch,lang,w),ex=S.lex.find(x=>x.k===k);
  if(ex){ex.n=n||ex.n;if($('ms').value.trim())ex.s=$('ms').value.trim()}
- else S.lex.push({k,ch,lang,w,s:$('ms').value.trim(),n,t:Date.now()});
+ else S.lex.push({k,ch,lang,w,s:$('ms').value.trim(),n,alts:dd&&dd.alts,pos:dd&&dd.alts[0]&&dd.alts[0].p,t:Date.now()});
  save();render();$('blx').click();
 }
 // --- export
@@ -283,6 +319,7 @@ function exportSheet(){
  +'<div class="tl" style="margin-top:12px">Format</div>'
  +'<div class="row"><button class="pri" onclick="doExport(\'csv\')">📊 CSV (Excel / Sheets)</button></div>'
  +'<div class="row"><button class="pri" onclick="doExport(\'anki\')">🃏 Anki (cartes à importer)</button></div>'
+ +'<div class="row"><button class="pri" onclick="doExport(\'pdf\')">🖨️ PDF décoré</button></div>'
  +'<div class="row"><button onclick="doExport(\'txt\')">📄 Texte lisible</button><button onclick="doExport(\'copy\')">📋 Copier</button></div>'
  +'<div class="tl">Chaque ligne contient : chapitre, langue, mot, traduction, phrase.</div>'
  +'<div class="row"><button onclick="$(\'blx\').click()">← Retour</button></div>');
@@ -292,8 +329,9 @@ function doExport(fmt){
  const lg=x=>x.lang==='ar'?'Arabe':'Français',chn=x=>BOOK[x.ch].fr_title,scope=v==='all'?'tout':'chapitre-'+(+v+1);
  const q=s=>'"'+String(s||'').replace(/"/g,'""')+'"',tab=s=>String(s||'').replace(/[\t\r\n]+/g,' ');
  const hl=x=>x.s?esc(x.s).replace(new RegExp(rx(esc(x.w)),'gi'),'<b>$&</b>'):'';
+ if(fmt==='pdf'){printLexicon(L,scope);return}
  if(fmt==='csv'){
-  dl('la-boite_lexique_'+scope+'.csv','\ufeff'+['Chapitre;Langue;Mot;Traduction;Phrase'].concat(L.map(x=>[chn(x),lg(x),x.w,x.n,x.s].map(q).join(';'))).join('\r\n'),'text/csv;charset=utf-8');
+  dl('la-boite_lexique_'+scope+'.csv','\ufeff'+['Chapitre;Langue;Mot;Traduction;Nature;Autres sens;Phrase;Phrase traduite'].concat(L.map(x=>[chn(x),lg(x),x.w,x.n,x.pos,(x.alts||[]).map(a=>a.t.join(' / ')).join(' | '),x.s,x.st].map(q).join(';'))).join('\r\n'),'text/csv;charset=utf-8');
  }else if(fmt==='anki'){
   const rows=L.map(x=>{const dir=x.lang==='ar'?' dir="rtl"':'';return [tab('<div'+dir+'>'+esc(x.w)+'</div>'),tab('<div>'+esc(x.n||'')+'</div>'+(x.s?'<br><i'+dir+'>'+hl(x)+'</i>':'')),chn(x).replace(/ /g,'_')].join('\t')});
   dl('la-boite_anki_'+scope+'.txt','#separator:tab\n#html:true\n#tags column:3\n'+rows.join('\n'),'text/plain;charset=utf-8');
@@ -305,9 +343,95 @@ function doExport(fmt){
  }
  toast('Export prêt ✓');
 }
+// --- PDF décoré (impression -> Enregistrer en PDF)
+const PCSS=`
+@page{size:A4;margin:17mm 14mm 18mm;@bottom-center{content:counter(page);font:10pt Georgia,serif;color:#a07a2a}@top-center{content:"La Boîte à merveilles · Lexique";font:italic 9pt Georgia,serif;color:#a58a55}}
+*{box-sizing:border-box}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;font-family:"Cormorant Garamond",Georgia,"Times New Roman",serif;color:#2a2118;font-size:11pt;line-height:1.45}
+.ar{font-family:"Amiri","Noto Naskh Arabic","Traditional Arabic",Tahoma,serif;line-height:1.9}
+.cover{height:260mm;border:3px double #c8962e;border-radius:6mm;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;page-break-after:always;
+ background-color:#fbf5e6;background-image:conic-gradient(from 45deg,rgba(15,107,116,.09) 0 25%,transparent 0 50%,rgba(15,107,116,.09) 0 75%,transparent 0);background-size:14mm 14mm}
+.star{position:relative;width:44mm;height:44mm;margin:0 auto 14mm}
+.star::before,.star::after{content:"";position:absolute;inset:0;border:3px solid #c8962e;background:rgba(15,107,116,.12)}
+.star::after{transform:rotate(45deg);border-color:#0f6b74}
+.star i{position:absolute;inset:15mm;border-radius:50%;background:#c8962e;opacity:.9}
+.cover h1{font-size:34pt;color:#0f6b74;margin:0;letter-spacing:.02em}
+.cover h2{font-size:30pt;color:#a07a2a;margin:2mm 0 0}
+.cover .rule{width:70mm;height:3px;margin:8mm auto;background:linear-gradient(90deg,transparent,#c8962e,transparent)}
+.cover p{font-size:13pt;color:#6b5a3c;margin:1mm 0}
+.chap+.chap{break-before:page}
+.band{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#0f6b74,#0a4a52);color:#fff;border:2px solid #c8962e;border-radius:10px;padding:8px 16px;margin-bottom:8mm}
+.band b{font-size:17pt}.band span{font-size:24pt;color:#f4d98a}.band small{display:block;font-size:9pt;opacity:.8}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm}
+.e{break-inside:avoid;background:#fffaf0;border:1px solid #e5d8bc;border-left:4px solid #c8962e;border-radius:8px;padding:7px 10px}
+.e[dir=rtl]{border-left:1px solid #e5d8bc;border-right:4px solid #c8962e}
+.top{display:flex;align-items:baseline;gap:8px;justify-content:space-between}
+.w{font-size:16pt;font-weight:700;color:#0f6b74}.w.ar{font-size:26pt;line-height:1.5}
+.pos{font:italic 8.5pt Georgia,serif;color:#fff;background:#c8962e;border-radius:99px;padding:0 8px;white-space:nowrap}
+.tr{font-size:13pt;color:#8a5a12;margin-top:1px}.tr.ar{font-size:20pt}
+.alt{font-size:9.5pt;color:#7b7160;margin-top:2px}.alt.ar{font-size:15pt}
+.s{font-style:italic;margin-top:5px;padding-top:4px;border-top:1px dashed #e0cf9f;font-size:10.5pt}.s.ar{font-style:normal;font-size:17pt;line-height:2}
+.s mark{background:linear-gradient(transparent 50%,#ffe08a 50%);color:inherit;padding:0 1px}
+.st{font-size:9.5pt;color:#7b7160;margin-top:1px}.st.ar{font-size:15pt}
+.bar{display:none}
+@media screen{body{max-width:210mm;margin:0 auto;padding:10mm;background:#fff}.bar{display:flex;position:sticky;top:0;z-index:9;justify-content:center;gap:10px;align-items:center;background:#0f6b74;color:#fff;padding:8px;margin:-10mm -10mm 8mm;font:14px sans-serif}.bar button{font:inherit;padding:6px 14px;border:0;border-radius:99px;background:#f4d98a;cursor:pointer}.cover{height:auto;min-height:200mm}}
+@media print{.bar{display:none!important}}`;
+function printLexicon(L,scope){
+ const by={};L.forEach(x=>(by[x.ch]=by[x.ch]||[]).push(x));
+ const date=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+ const entry=x=>{
+  const A=x.lang==='ar',wd=A?' dir="rtl"':'',td=A?'':' dir="rtl"',tc=A?'':' ar',wc=A?' ar':'';
+  const hl=x.s?esc(x.s).replace(new RegExp(rx(esc(x.w)),'gi'),'<mark>$&</mark>'):'';
+  const alt=(x.alts||[]).map(a=>a.t.join(' · ')).join(' · ');
+  return '<article class="e"'+wd+'><div class="top"><div class="w'+wc+'">'+esc(x.w)+'</div>'+(x.pos?'<span class="pos">'+esc(x.pos)+'</span>':'')+'</div>'
+   +(x.n?'<div class="tr'+tc+'"'+td+'>'+esc(x.n)+'</div>':'')
+   +(alt?'<div class="alt'+tc+'"'+td+'>◆ '+esc(alt)+'</div>':'')
+   +(x.s?'<div class="s'+wc+'"'+wd+'>'+(A?hl:'« '+hl+' »')+'</div>':'')
+   +(x.st?'<div class="st'+tc+'"'+td+'>'+esc(x.st)+'</div>':'')+'</article>';
+ };
+ const chaps=Object.keys(by).map(Number).sort((a,b)=>a-b).map(i=>'<section class="chap"><div class="band"><div><b>'+esc(BOOK[i].fr_title)+'</b><small>'+by[i].length+' entrée'+(by[i].length>1?'s':'')+'</small></div><span class="ar" dir="rtl">'+esc(BOOK[i].ar_title)+'</span></div><div class="grid">'+by[i].map(entry).join('')+'</div></section>').join('');
+ const html='<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>La Boîte à merveilles — Lexique</title><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Amiri:wght@400;700&display=swap" rel="stylesheet"><style>'+PCSS+'</style></head><body>'
+  +'<div class="bar">Choisis « Enregistrer au format PDF » <button onclick="print()">🖨️ Enregistrer en PDF</button></div>'
+  +'<div class="cover"><div class="star"><i></i></div><h1>La Boîte à merveilles</h1><h2 class="ar" dir="rtl">صندوق العجائب</h2><div class="rule"></div><p>Mon lexique</p><p>'+L.length+' mot'+(L.length>1?'s':'')+' &amp; expressions</p><p style="margin-top:8mm;font-style:italic">'+date+'</p></div>'
+  +chaps+'</body></html>';
+ const w=window.open('','_blank');
+ if(w){w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch(e){}},1800);return}
+ const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-9999px;width:210mm;height:297mm';document.body.appendChild(f);
+ f.contentDocument.open();f.contentDocument.write(html);f.contentDocument.close();
+ setTimeout(()=>{f.contentWindow.focus();f.contentWindow.print()},1800);
+}
 // --- review
 let Q=[],POOL=[],known=0,initial=0,rch=0,seen={},graded={},miss=[],mode='mix',cur=null;
-const IV=[0,1,3,7,21];
+const dkey=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const todayN=()=>((S.hist||{})[dkey()]||{n:0}).n;
+function sched(x,g){
+ x.ef=x.ef||2.5;x.rp=x.rp||0;
+ if(g===0){x.lp=(x.lp||0)+1;x.ef=Math.max(1.3,x.ef-.2);x.rp=0;x.iv=0;x.due=Date.now()+10*60000}
+ else{
+  x.iv=x.rp===0?1:x.rp===1?3:Math.max(1,Math.round((x.iv||1)*x.ef*(g===1?.8:g===3?1.3:1)));
+  if(g===1)x.ef=Math.max(1.3,x.ef-.15);if(g===3)x.ef+=.15;
+  x.rp++;x.due=Date.now()+x.iv*864e5;
+ }
+ x.b=x.iv<1?0:x.iv<4?1:x.iv<10?2:x.iv<21?3:4;
+ x.ok=(x.ok||0)+(g>0?1:0);x.ko=(x.ko||0)+(g===0?1:0);
+}
+const predict=(x,g)=>{const c=Object.assign({},x);sched(c,g);return c.iv};
+const fmtIv=d=>d<1?'10 min':d+' j';
+function statsSheet(){
+ const L=S.lex,n=L.length,neu=L.filter(x=>!(x.ok||x.ko)).length,mast=L.filter(x=>(x.iv||0)>=21).length,learn=n-neu-mast;
+ const ok=L.reduce((a,x)=>a+(x.ok||0),0),ko=L.reduce((a,x)=>a+(x.ko||0),0),acc=ok+ko?Math.round(100*ok/(ok+ko)):0;
+ const H=S.hist||{},days=[];for(let i=13;i>=0;i--){const d=new Date(Date.now()-i*864e5);days.push([dkey(d),d.getDate()])}
+ const mx=Math.max(5,...days.map(([k])=>(H[k]||{n:0}).n));
+ const bars=days.map(([k,dd])=>{const v=(H[k]||{n:0}).n;return '<div class="bc"><i style="height:'+Math.round(80*v/mx)+'px" title="'+v+'"></i><small>'+dd+'</small></div>'}).join('');
+ const hard=L.filter(x=>x.lp>0).sort((a,b)=>b.lp-a.lp).slice(0,5),gt=todayN(),goal=S.goal||10;
+ show('<h2>📊 Statistiques</h2><div class="stg"><div><b>'+n+'</b><span>mots</span></div><div><b>'+neu+'</b><span>nouveaux</span></div><div><b>'+learn+'</b><span>en cours</span></div><div><b>'+mast+'</b><span>maîtrisés</span></div><div><b>'+dueN()+'</b><span>à réviser</span></div><div><b>'+acc+'%</b><span>réussite</span></div></div>'
+ +'<div class="tl">🎯 Objectif du jour : '+gt+' / '+goal+' · 🔥 '+(S.streak||0)+' jour'+((S.streak||0)>1?'s':'')+' de suite</div><div class="pbar"><i style="width:'+Math.min(100,100*gt/goal)+'%"></i></div>'
+ +'<div class="row"><select id="goal">'+[5,10,20,30,50].map(v=>'<option value="'+v+'"'+(v===goal?' selected':'')+'>'+v+' révisions / jour</option>').join('')+'</select></div>'
+ +'<div class="tl" style="margin-top:12px">14 derniers jours</div><div class="bars">'+bars+'</div>'
+ +(hard.length?'<div class="tl" style="margin-top:12px">Mots les plus difficiles</div>'+hard.map(x=>'<div class="lx"><div><b'+(x.lang==='ar'?' dir="rtl"':'')+'>'+esc(x.w)+'</b>'+(x.n?' — '+esc(x.n):'')+'</div><span class="tl">✖ '+x.lp+'</span></div>').join(''):'')
+ +'<div class="row"><button class="pri" onclick="review(-1,true)">🧠 Réviser</button><button onclick="hide()">Fermer</button></div>');
+ $('goal').onchange=e=>{S.goal=+e.target.value;save();statsSheet()};
+}
 const dueN=()=>S.lex.filter(x=>(x.due||0)<=Date.now()).length;
 const rx=s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const shuf=a=>a.slice().sort(()=>Math.random()-.5);
@@ -317,28 +441,37 @@ function review(ch,all){
  rch=ch;const now=Date.now();
  POOL=ch<0?S.lex.filter(x=>all||(x.due||0)<=now):S.lex.filter(x=>x.ch===ch);
  if(!POOL.length){show(ch<0?'<h2>🎉 Rien à réviser</h2><p class="sent">Tous tes mots sont à jour. Reviens demain, ou révise tout quand même.</p><div class="row"><button onclick="hide()">Fermer</button><button class="pri" onclick="review(-1,true)">Tout réviser</button></div>':'<h2>Aucun mot</h2><p class="sent">Touche des mots pendant la lecture pour les ajouter, puis reviens réviser.</p>');return}
- show('<h2>🧠 '+(ch<0?'Révision générale':BOOK[ch].fr_title)+'</h2><p class="sent">'+POOL.length+' mot(s) à réviser</p><div class="tl">Type d’exercice</div>'
+ show('<h2>🧠 '+(ch<0?'Révision générale':BOOK[ch].fr_title)+'</h2><p class="sent">'+POOL.length+' mot(s) · 🎯 aujourd’hui '+todayN()+' / '+(S.goal||10)+'</p>'
+ +'<div class="row"><select id="rf"><option value="all">Tous les mots</option><option value="hard">Mots difficiles</option><option value="new">Nouveaux mots</option></select><select id="rn"><option value="10">10 mots</option><option value="20"'+(ch<0?' selected':'')+'>20 mots</option><option value="999"'+(ch<0?'':' selected')+'>Tout</option></select></div>'
+ +'<div class="tl" style="margin-top:10px">Type d’exercice</div>'
  +'<div class="row"><button class="pri" onclick="startRev(\'mix\')">✨ Mixte — s’adapte à ton niveau (conseillé)</button></div>'
  +'<div class="row"><button onclick="startRev(\'cartes\')">🃏 Cartes</button><button onclick="startRev(\'qcm\')">🔘 QCM</button></div>'
- +'<div class="row"><button onclick="startRev(\'ecrire\')">✍️ Écrire</button><button onclick="startRev(\'ecoute\')">👂 Écoute</button></div>');
+ +'<div class="row"><button onclick="startRev(\'ecrire\')">✍️ Écrire</button><button onclick="startRev(\'ecoute\')">👂 Écoute</button><button onclick="startRev(\'trad\')">🔄 Traduction → mot</button></div>');
 }
-function startRev(m){mode=m;Q=shuf(POOL);initial=Q.length;known=0;miss=[];seen={};graded={};exo()}
+function startRev(m){
+ mode=m;let P=POOL.slice();
+ const f=$('rf')&&$('rf').value,n=$('rn')?+$('rn').value:999;
+ if(f==='hard')P=P.filter(x=>(x.lp||0)>=1||(x.ko||0)>0);
+ if(f==='new')P=P.filter(x=>!(x.ok||x.ko));
+ if(!P.length){toast('Aucun mot dans ce filtre');return}
+ Q=shuf(P).slice(0,n);initial=Q.length;known=0;miss=[];seen={};graded={};exo();
+}
 function dist(x){return shuf(S.lex.filter(y=>y.lang===x.lang&&y.w!==x.w)).slice(0,3)}
 function typeFor(x){
  const hasP=!!(x.s&&new RegExp(rx(x.w),'i').test(x.s))||!!x.n;
- let t=mode;
+ let t=mode;if(t==='trad')return x.n?'trad':'cartes';
  if(t==='mix'){const b=x.b||0;t=b<=0?'qcm':b<=2?'ecrire':'ecoute'}
  if(t==='qcm'&&(!hasP||dist(x).length<2))t='cartes';
  if(t==='ecrire'&&!hasP)t='cartes';
  return t;
 }
 const head=()=>'<div class="pbar"><i style="width:'+Math.round(100*(1-Q.length/Math.max(initial,1)))+'%"></i></div><div class="tl">'+(rch<0?'Révision générale':BOOK[rch].fr_title)+' · reste '+Q.length+'</div>';
-const LAB={cartes:'🃏 Carte',qcm:'🔘 Choisis le mot',ecrire:'✍️ Écris le mot',ecoute:'👂 Écoute et écris'};
+const LAB={cartes:'🃏 Carte',qcm:'🔘 Choisis le mot',ecrire:'✍️ Écris le mot',ecoute:'👂 Écoute et écris',trad:'🔄 Écris le mot'};
 function exo(){
  enterFn=null;
  if(!Q.length)return finish();
- const x=Q[0],t=typeFor(x);cur={x,t};
- const has=x.s&&new RegExp(rx(x.w),'i').test(x.s);
+ const x=Q[0],t=typeFor(x);cur={x,t,t0:Date.now()};
+ const has=t!=='trad'&&x.s&&new RegExp(rx(x.w),'i').test(x.s);
  const P=has?esc(x.s).replace(new RegExp(rx(esc(x.w)),'gi'),'<span class="bl">_____</span>'):'<div class="tl">Traduction</div><b>'+esc(x.n||'?')+'</b>';
  const dir=x.lang==='ar'?' dir="rtl"':'';
  let h=head()+'<div class="tl">'+LAB[t]+'</div>';
@@ -349,14 +482,14 @@ function exo(){
   h+='<div class="card '+x.lang+'" style="min-height:90px">'+P+'</div>'+ch.map((c,i)=>'<button class="chb" id="c'+i+'"'+dir+' onclick="answerQ('+i+')">'+esc(c)+'</button>').join('');
  }else{
   if(t==='ecoute')h+='<div style="text-align:center;margin:14px 0"><button class="pri" style="font-size:28px;padding:10px 26px" onclick="speak(cur.x.w,cur.x.lang)">🔊</button><div class="tl">Écoute le mot et écris-le'+(x.n?' — indice : '+esc(x.n):'')+'</div></div>';
-  else h+='<div class="card '+x.lang+'" style="min-height:90px">'+P+'</div>'+(x.s&&x.n?'<div class="tl" style="text-align:center">Indice : '+esc(x.n)+'</div>':'');
+  else h+='<div class="card '+x.lang+'" style="min-height:90px">'+P+'</div>'+(t==='ecrire'&&x.s&&x.n?'<div class="tl" style="text-align:center">Indice : '+esc(x.n)+'</div>':'');
   h+='<input id="ans" dir="auto" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ta réponse…" style="margin-top:8px"><div class="row"><button class="pri" onclick="submitT()">Valider</button></div>';
   enterFn=submitT;
  }
  h+='<div class="row"><button onclick="hide()">Fermer</button></div>';
  show(h);
  if(t==='ecoute')setTimeout(()=>speak(x.w,x.lang),350);
- if(t==='ecrire'||t==='ecoute')setTimeout(()=>{const i=$('ans');i&&i.focus()},120);
+ if(t==='ecrire'||t==='ecoute'||t==='trad')setTimeout(()=>{const i=$('ans');i&&i.focus()},120);
 }
 function revealHTML(x){
  const dir=x.lang==='ar'?' dir="rtl"':'';
@@ -364,11 +497,11 @@ function revealHTML(x){
  return '<div class="card '+x.lang+'" style="min-height:0;animation:none;padding:12px 8px"'+dir+'>'+body+'</div><div class="tl" style="text-align:center">'+(x.n?'🔁 '+esc(x.n):'')+'</div>';
 }
 function fbk(ok,msg,cards){
- const x=cur.x;
+ const x=cur.x,g0=ok?(cur.t!=='cartes'&&Date.now()-cur.t0<5000?3:2):0;
  show(head()+'<div class="fb '+(ok?'ok':'ko')+'">'+msg+'</div>'+revealHTML(x)
- +(cards?'<div class="row"><button onclick="speak(cur.x.w,cur.x.lang)">🔊</button><button onclick="nextQ(0)">🔁 À revoir</button><button class="pri" onclick="nextQ(1)">✔ Je savais</button></div>'
- :'<div class="row"><button onclick="speak(cur.x.w,cur.x.lang)">🔊</button><button class="pri" onclick="nextQ('+(ok?1:0)+')">Suivant →</button></div>'));
- enterFn=cards?()=>nextQ(1):()=>nextQ(ok?1:0);
+ +(cards?'<div class="row"><button onclick="speak(cur.x.w,cur.x.lang)">🔊</button></div><div class="row">'+[0,1,2,3].map(g=>'<button class="'+(g===2?'pri':'')+'" onclick="nextQ('+g+')">'+['🔁 Encore','😓 Difficile','👍 Bien','⚡ Facile'][g]+'<small style="display:block;font-size:11px;opacity:.85">'+fmtIv(predict(x,g))+'</small></button>').join('')+'</div>'
+ :'<div class="row"><button onclick="speak(cur.x.w,cur.x.lang)">🔊</button><button class="pri" onclick="nextQ('+g0+')">Suivant →</button></div>'));
+ enterFn=cards?()=>nextQ(2):()=>nextQ(g0);
  if(!cards)speak(x.w,x.lang);
 }
 function flip(){fbk(true,'Voici la réponse',true)}
@@ -384,21 +517,21 @@ function submitT(){
  const M={ok:'✔ Parfait !',acc:'✔ Correct (attention aux accents)',near:'≈ Presque ! une petite faute',ko:'✖ Pas tout à fait'};
  fbk(v==='ok'||v==='acc',M[v]);
 }
-function nextQ(ok){
+function nextQ(g){
  const x=Q.shift();
- if(!graded[x.k]){graded[x.k]=1;x.b=ok?Math.min(4,(x.b||0)+1):0;x.due=Date.now()+IV[x.b]*864e5}
- if(ok){if(!seen[x.k])known++}else{if(!seen[x.k])miss.push(x);seen[x.k]=1;Q.push(x)}
+ if(!graded[x.k]){graded[x.k]=1;sched(x,g);const H=S.hist=S.hist||{},h=H[dkey()]||(H[dkey()]={n:0,k:0});h.n++;if(g>0)h.k++}
+ if(g>0){if(!seen[x.k])known++}else{if(!seen[x.k])miss.push(x);seen[x.k]=1;Q.push(x)}
  save();exo();
 }
 function finish(){
  enterFn=null;if(rch>=0)S.done[rch]=1;
- const d=new Date(),f=x=>x.toISOString().slice(0,10),today=f(d),y=new Date(d-864e5);
+ const d=new Date(),f=dkey,today=f(d),y=new Date(d-864e5);
  if(S.last!==today){S.streak=S.last===f(y)?(S.streak||0)+1:1;S.last=today}
  save();render();
  const tot=initial,pct=Math.round(100*known/Math.max(tot,1));
  show('<h2>'+(pct>=80?'🎉':pct>=50?'👍':'💪')+' '+(rch<0?'Révision terminée':'Session terminée')+'</h2>'
  +'<div class="score"><b>'+known+' / '+tot+'</b><span>du premier coup</span></div>'
- +'<p class="sent" style="text-align:center">🔥 '+S.streak+' jour'+(S.streak>1?'s':'')+' de suite</p>'
+ +'<p class="sent" style="text-align:center">🔥 '+S.streak+' jour'+(S.streak>1?'s':'')+' de suite · 🎯 '+todayN()+' / '+(S.goal||10)+' aujourd’hui</p>'
  +(miss.length?'<div class="tl">À retravailler</div>'+miss.map(x=>'<div class="lx"><div><b'+(x.lang==='ar'?' dir="rtl"':'')+'>'+esc(x.w)+'</b>'+(x.n?' — '+esc(x.n):'')+'</div></div>').join(''):'<p class="sent" style="text-align:center">Aucune erreur, bravo ! ✨</p>')
  +'<div class="row">'+(miss.length?'<button onclick="POOL=miss.slice();startRev(mode)">Réviser les ratés</button>':'')+(rch>=0?'<button class="pri" onclick="hide();go(1)">Chapitre suivant →</button>':'<button class="pri" onclick="hide()">Fermer</button>')+'</div>');
 }
@@ -454,7 +587,7 @@ function voiceSheet(){
  $('va').onchange=e=>{S.va=e.target.value;save()};
  $('vs').oninput=e=>{S.rate=+e.target.value;$('vr').textContent=S.rate;save()};
 }
-$('bvo').onclick=voiceSheet;
+$('bvo').onclick=voiceSheet;$('brv').onclick=()=>review(-1);$('bst').onclick=statsSheet;
 if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=()=>{};
 // --- settings
 $('ch').onchange=e=>{S.ch=+e.target.value;save();render()};
