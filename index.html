@@ -258,11 +258,11 @@ $('selbar').onclick=()=>{
 };
 
 const TC=(()=>{try{return JSON.parse(localStorage.getItem('boiteTr')||'{}')}catch(e){return{}}})();
+async function fj(url,ms){const c=new AbortController(),tm=setTimeout(()=>c.abort(),ms||7000);try{const r=await fetch(url,{signal:c.signal});if(!r.ok)throw 0;return await r.json()}finally{clearTimeout(tm)}}
 async function autoTr(lang,w){
  const k=lang+'|'+w;if(TC[k])return TC[k];
  const lp=lang==='fr'?'fr|ar':'ar|fr';
- const r=await fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(w)+'&langpair='+lp);
- const j=await r.json();let tr=(j.responseData&&j.responseData.translatedText)||'';
+ const j=await fj('https://api.mymemory.translated.net/get?q='+encodeURIComponent(w)+'&langpair='+lp);let tr=(j.responseData&&j.responseData.translatedText)||'';
  if(!tr||/MYMEMORY|INVALID/i.test(tr))throw 0;
  TC[k]=tr;try{localStorage.setItem('boiteTr',JSON.stringify(TC))}catch(e){}return tr;
 }
@@ -270,18 +270,20 @@ const POS={noun:'nom',verb:'verbe',adjective:'adjectif',adverb:'adverbe',preposi
 const saveTC=()=>{try{localStorage.setItem('boiteTr',JSON.stringify(TC))}catch(e){}};
 async function gtx(lang,q,dict){
  const sl=lang==='ar'?'ar':'fr',tl=lang==='ar'?'fr':'ar';
- const r=await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl='+sl+'&tl='+tl+'&dt=t'+(dict?'&dt=bd':'')+'&q='+encodeURIComponent(q));
- if(!r.ok)throw 0;return r.json();
+ return fj('https://translate.googleapis.com/translate_a/single?client=gtx&sl='+sl+'&tl='+tl+'&dt=t'+(dict?'&dt=bd':'')+'&q='+encodeURIComponent(q));
 }
 async function autoDict(lang,w){
- const k='d|'+lang+'|'+w;if(TC[k])return TC[k];
- let res;
- try{
-  const j=await gtx(lang,w,!w.includes(' '));
-  const tr=(j[0]||[]).map(x=>x[0]).join('').trim();
-  const alts=(j[1]||[]).map(e=>({p:POS[e[0]]||e[0],t:(e[1]||[]).slice(0,5)})).filter(e=>e.t.length).slice(0,4);
-  if(!tr)throw 0;res={tr,alts};
- }catch(e){res={tr:await autoTr(lang,w),alts:[]}}
+ const k='d|'+lang+'|'+w;if(TC[k]&&TC[k].tr)return TC[k];
+ const sl=lang==='ar'?'ar':'fr',tl=lang==='ar'?'fr':'ar';
+ const tries=[
+  async()=>{const j=await gtx(lang,w,!w.includes(' '));const tr=(j[0]||[]).map(x=>x[0]).join('').trim();const alts=(j[1]||[]).map(e=>({p:POS[e[0]]||e[0],t:(e[1]||[]).slice(0,5)})).filter(e=>e.t.length).slice(0,4);return{tr,alts}},
+  async()=>({tr:((await fj('https://lingva.ml/api/v1/'+sl+'/'+tl+'/'+encodeURIComponent(w))).translation||'').trim(),alts:[]}),
+  async()=>({tr:((await fj('https://lingva.garudalinux.org/api/v1/'+sl+'/'+tl+'/'+encodeURIComponent(w))).translation||'').trim(),alts:[]}),
+  async()=>({tr:await autoTr(lang,w),alts:[]})
+ ];
+ let res=null;
+ for(const f of tries){try{const r=await f();if(r&&r.tr){res=r;break}}catch(e){}}
+ if(!res)throw new Error('no-translation');
  TC[k]=res;saveTC();return res;
 }
 async function autoSent(lang,s){
@@ -300,16 +302,29 @@ function fillTr(){
   const n=$('note');if(n&&!n.value)n.value=r.tr;
   const el=$('tr');if(el)el.textContent='✨ traduction automatique — touche un sens pour le choisir';
   const al=$('alts');if(al)al.innerHTML=altsHTML(r.alts);
- }).catch(()=>{const e=$('tr');if(e&&window._cur===c&&!$('note').value)e.textContent='Traduction auto indisponible (hors ligne ?) — elle sera ajoutée plus tard, ou écris-la toi-même'});
+ }).catch(()=>{const e=$('tr');if(e&&window._cur===c&&!$('note').value)e.textContent='⚠️ Traduction impossible pour l’instant — touche ici pour réessayer (ou écris-la toi-même)';e.style.cursor='pointer';e.onclick=()=>{e.textContent='⏳ nouvelle tentative…';e.onclick=null;fillTr()}});
  autoSent(c.lang,c.sent).then(tr=>{const e=ex();if(e&&!e.st){e.st=tr;save()}if(window._cur!==c)return;c.st=tr;const s=$('st');if(s)s.textContent=tr}).catch(()=>{});
 }
 $('sh').addEventListener('click',e=>{const c=e.target.closest('.chip[data-t]');if(c&&$('note')){$('note').value=c.dataset.t;$('note').dispatchEvent(new Event('input'))}});
 function delW(k){S.lex=S.lex.filter(x=>x.k!==k);save();hide();render(true)}
-async function backfill(){for(const x of S.lex.filter(y=>!y.n)){try{const r=await autoDict('fr',x.w);if(!x.n){x.n=r.tr;x.alts=r.alts;x.pos=r.alts[0]&&r.alts[0].p;save()}}catch(e){break}}}
+let bfRun=false;
+async function backfill(manual){
+ if(bfRun)return 0;bfRun=true;let ok=0,fails=0;
+ for(const x of S.lex.filter(y=>!y.n)){
+  try{const r=await autoDict('fr',x.w);if(!x.n){x.n=r.tr;x.alts=r.alts;x.pos=r.alts[0]&&r.alts[0].p;save();ok++}fails=0}catch(e){if(++fails>=3)break}
+ }
+ bfRun=false;
+ if(ok&&document.getElementById('ov').classList.contains('show')&&/Mon lexique/.test($('sh').textContent))$('blx').click();
+ if(ok&&STORY)render(true);
+ return ok;
+}
+async function retryAll(){toast('⏳ Traduction des mots manquants…');const n=await backfill(true);const m=S.lex.filter(x=>!x.n).length;toast(n?'✓ '+n+' mot(s) traduit(s)'+(m?' · '+m+' restent':''):'Impossible pour l’instant — vérifie ta connexion');if(!$('ov').classList.contains('show'))return;$('blx').click()}
+setInterval(()=>{if(navigator.onLine&&S.lex.some(x=>!x.n))backfill()},30000);
 addEventListener('online',backfill);
 const grp=L=>{const m={},o=[];L.forEach(x=>{const g=x.sid+'|'+x.ch;if(!m[g]){m[g]={g,sid:x.sid,ch:x.ch,bt:x.bt||'',ct:x.ct||'',items:[]};o.push(m[g])}m[g].items.push(x)});return o.sort((a,b)=>a.bt.localeCompare(b.bt)||a.ch-b.ch)};
 $('blx').onclick=()=>{
  let h='<h2>📒 Mon lexique</h2><div class="row"><button class="pri" onclick="addForm()">➕ Ajouter un mot</button><button onclick="exportSheet()">⬇️ Exporter</button></div>'+(S.lex.length?'<div class="row"><button onclick="review(-1)">🧠 Révision générale ('+dueN()+' à réviser)</button></div>':'');
+ if(S.lex.some(x=>!x.n))h+='<div class="row"><button onclick="retryAll()">🔄 Traduire les mots manquants ('+S.lex.filter(x=>!x.n).length+')</button></div>';
  if(!S.lex.length)h+='<p class="sent">Vide pour l’instant. Touche un mot français pendant la lecture : il s’ajoute tout seul avec sa traduction.</p>';
  grp(S.lex).forEach(G=>{
   h+='<h3 style="margin:16px 0 4px">'+esc(G.bt)+' · '+esc(G.ct)+' <small style="font-weight:normal;color:var(--mut)">('+G.items.length+')</small></h3><button onclick="review('+G.ch+',false,\''+G.sid+'\')">Réviser</button>';
