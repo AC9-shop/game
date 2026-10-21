@@ -84,7 +84,7 @@ body:has(.fbar) main{padding-bottom:110px}
 .book .x{position:absolute;top:8px;right:8px;padding:0 9px;border-radius:99px;background:rgba(0,0,0,.45);color:#fff;border:0;z-index:2}
 body.home #ch,body.home #bfr,body.home #bar,body.home #bfr2,body.home #sm,body.home #bg,body.home #bfo,body.home #bhome,body.home .fbar,body.home #selbar{display:none!important}
 textarea{font:inherit;font-size:14px;width:100%;padding:8px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--fg);margin:4px 0}
-.ar2{font-family:"Amiri","Noto Naskh Arabic",Tahoma,serif;font-size:1.15em;color:var(--acc)}
+.tin{flex:1.3;width:auto;min-width:0;padding:4px 10px;border-radius:10px;font-family:"Amiri","Noto Naskh Arabic",Tahoma,serif;font-size:1.1em;color:var(--acc)}.lx{align-items:center}.ar2{font-family:"Amiri","Noto Naskh Arabic",Tahoma,serif;font-size:1.15em;color:var(--acc)}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.seg{opacity:1;transform:none}}
 </style>
 </head><body>
@@ -116,22 +116,33 @@ const $=id=>document.getElementById(id);
 let S={sid:null,sp:{},last:null,eng:'',vf:'',va:'',rate:.9,ch:0,fs:19,fr:1,ar:1,fr2:1,t:'',pos:{},lex:[],done:{},ts:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem('boite2')||localStorage.getItem('boite')||'{}'))}catch(e){}
 let user=null,db=null,pushT=null;
+function normLex(L){
+ const m={};
+ (L||[]).filter(x=>x&&x.lang!=='ar').forEach(x=>{
+  const w=String(x.w||'').toLowerCase(),k='fr|'+w,e=m[k];x.w=w;
+  if(!e){x.k=k;m[k]=x;return}
+  ['n','alts','pos','st','s'].forEach(f=>{if(!e[f]&&x[f])e[f]=x[f]});
+  if((x.ok||0)+(x.ko||0)>(e.ok||0)+(e.ko||0))['ok','ko','lp','iv','ef','rp','due','b'].forEach(f=>{if(x[f]!==undefined)e[f]=x[f]});
+ });
+ return Object.values(m);
+}
 (function(){
  if(!S.sp)S.sp={};
  if(!S.sp.boite&&((S.pos&&Object.keys(S.pos).length)||(S.done&&Object.keys(S.done).length)||S.ch))S.sp.boite={ch:S.ch||0,pos:S.pos||{},done:S.done||{}};
  const B=BUILTIN[0];
  S.lex=(S.lex||[]).filter(x=>x.lang!=='ar').map(x=>{if(!x.sid){x.sid='boite';x.bt=B.title;x.ct=(B.chapters[x.ch]||{}).fr_title||'';x.k='boite|'+x.k}return x});
+ S.lex=normLex(S.lex);
 })();
 const save=()=>{stash();S.ts=Date.now();try{localStorage.setItem('boite2',JSON.stringify(S))}catch(e){};$('cnt').textContent=S.lex.length;try{$('dn').textContent=dueN()}catch(e){}push()};
 const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 function fillSel(){$('ch').innerHTML='';BOOK.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.fr_title+(c.ar_title?' · '+c.ar_title:'');$('ch').appendChild(o)})}
 function stash(){if(SID)S.sp[SID]={ch:S.ch,pos:S.pos,done:S.done}}
 const norm=(t,lang)=>{let w=t.replace(/^[^\p{L}\p{M}]+|[^\p{L}\p{M}]+$/gu,'');if(lang==='fr'){const p=w.split(/[’']/);w=p[p.length-1]||w;w=w.toLowerCase()}return w};
-const key=(ch,lang,w)=>SID+'|'+ch+'|'+lang+'|'+w;
+const key=(ch,lang,w)=>'fr|'+String(w||'').toLowerCase();
 const has=(ch,lang,w)=>S.lex.some(x=>x.k===key(ch,lang,w));
 const pn=(s,lang)=>{const w=s.replace(/^[^\p{L}\p{M}]+|[^\p{L}\p{M}]+$/gu,'');return lang==='fr'?w.toLowerCase():w};
 let PC={};
-function phrasesFor(lang){return PC[lang]||(PC[lang]=S.lex.filter(x=>x.sid===SID&&x.ch===S.ch&&x.lang===lang&&x.w.includes(' ')).map(x=>({w:x.w,t:x.w.split(' ').map(y=>pn(y,lang))})).sort((p,q)=>q.t.length-p.t.length))}
+function phrasesFor(lang){return PC[lang]||(PC[lang]=S.lex.filter(x=>x.lang===lang&&x.w.includes(' ')).map(x=>({w:x.w,t:x.w.split(' ').map(y=>pn(y,lang))})).sort((p,q)=>q.t.length-p.t.length))}
 function words(t,lang){
  if(lang==='ar')return esc(t);
  const tk=t.split(' '),P=phrasesFor(lang),out=[];
@@ -203,25 +214,22 @@ function sentenceOf(seg,lang,tok){
  const ss=t.split(/(?<=[.!?؟…»])\s+/);
  return ss.find(x=>x.split(' ').some(y=>norm(y,lang)===tok))||t.slice(0,200);
 }
+function trEntry(ex){
+ autoDict('fr',ex.w).then(r=>{if(!ex.n){ex.n=r.tr}if(!ex.alts){ex.alts=r.alts;ex.pos=ex.pos||(r.alts[0]?r.alts[0].p:'')}save()}).catch(()=>{});
+ if(ex.s)autoSent('fr',ex.s).then(tr=>{if(!ex.st){ex.st=tr;save()}}).catch(()=>{});
+}
 function addEntry(w,sent){
  const k=key(S.ch,'fr',w);let ex=S.lex.find(x=>x.k===k);if(ex)return ex;
- ex={k,sid:SID,bt:STORY.title,ct:BOOK[S.ch].fr_title,ch:S.ch,lang:'fr',w,s:sent,n:'',t:Date.now()};
- S.lex.push(ex);save();return ex;
+ ex={k,sid:SID,bt:STORY.title,ct:BOOK[S.ch].fr_title,ch:S.ch,lang:'fr',w:w.toLowerCase(),s:sent,n:'',t:Date.now()};
+ S.lex.push(ex);save();trEntry(ex);return ex;
 }
 const popWord=w=>document.querySelectorAll('.w,.ph').forEach(e=>{if(e.dataset.w===w)e.classList.add('pop')});
 function openWord(el){
- const w=el.dataset.w,seg=BOOK[S.ch].segs[+el.closest('.seg').dataset.i],sent=sentenceOf(seg,'fr',w);
- const had=S.lex.some(x=>x.k===key(S.ch,'fr',w));
- addEntry(w,sent);
- if(!had){render(true);popWord(w)}
- openEntry('fr',w,sent);
+ const w=el.dataset.w,seg=BOOK[S.ch].segs[+el.closest('.seg').dataset.i];
+ if(S.lex.some(x=>x.k===key(S.ch,'fr',w))){popWord(w);return}
+ addEntry(w,sentenceOf(seg,'fr',w));render(true);popWord(w);
 }
-function openPhrase(el){
- const w=el.dataset.w,seg=BOOK[S.ch].segs[+el.closest('.seg').dataset.i],T=seg.fr;
- const ex=S.lex.find(x=>x.k===key(S.ch,'fr',w));
- const sent=(ex&&ex.s)||T.split(/(?<=[.!?…»])\s+/).find(y=>y.toLowerCase().includes(w.toLowerCase()))||T.slice(0,220);
- openEntry('fr',w,sent);
-}
+function openPhrase(el){popWord(el.dataset.w)}
 function openEntry(lang,w,sent){
  const k=key(S.ch,lang,w),ex=S.lex.find(x=>x.k===k);
  window._cur={lang,w,sent,k,alts:ex&&ex.alts,pos:ex&&ex.pos,st:ex&&ex.st};
@@ -254,7 +262,7 @@ $('selbar').onclick=()=>{
  const ss=T.split(/(?<=[.!?؟…»])\s+/),lw=w.toLowerCase();
  const sent=ss.find(y=>y.toLowerCase().includes(lw))||T.slice(0,220);
  getSelection().removeAllRanges();$('selbar').classList.remove('show');
- addEntry(w,sent);render(true);popWord(w);openEntry('fr',w,sent);
+ addEntry(w,sent);render(true);popWord(w);
 };
 
 const TC=(()=>{try{return JSON.parse(localStorage.getItem('boiteTr')||'{}')}catch(e){return{}}})();
@@ -306,6 +314,7 @@ function fillTr(){
  autoSent(c.lang,c.sent).then(tr=>{const e=ex();if(e&&!e.st){e.st=tr;save()}if(window._cur!==c)return;c.st=tr;const s=$('st');if(s)s.textContent=tr}).catch(()=>{});
 }
 $('sh').addEventListener('click',e=>{const c=e.target.closest('.chip[data-t]');if(c&&$('note')){$('note').value=c.dataset.t;$('note').dispatchEvent(new Event('input'))}});
+function editN(k,v){const e=S.lex.find(x=>x.k===k);if(e){e.n=v.trim();save()}}
 function delW(k){S.lex=S.lex.filter(x=>x.k!==k);save();hide();render(true)}
 let bfRun=false;
 async function backfill(manual){
@@ -328,7 +337,7 @@ $('blx').onclick=()=>{
  if(!S.lex.length)h+='<p class="sent">Vide pour l’instant. Touche un mot français pendant la lecture : il s’ajoute tout seul avec sa traduction.</p>';
  grp(S.lex).forEach(G=>{
   h+='<h3 style="margin:16px 0 4px">'+esc(G.bt)+' · '+esc(G.ct)+' <small style="font-weight:normal;color:var(--mut)">('+G.items.length+')</small></h3><button onclick="review('+G.ch+',false,\''+G.sid+'\')">Réviser</button>';
-  G.items.forEach(x=>{h+='<div class="lx"><div><b>'+esc(x.w)+'</b>'+(x.n?' — <span dir="rtl" class="ar2">'+esc(x.n)+'</span>':' <small>⏳</small>')+'</div><button onclick="delW(\''+x.k.replace(/'/g,"\\'")+'\');$(\'blx\').click()">✕</button></div>'});
+  G.items.forEach(x=>{h+='<div class="lx"><div style="flex:1"><b>'+esc(x.w)+'</b></div><input class="tin" dir="auto" value="'+esc(x.n||'')+'" placeholder="⏳ traduction…" onchange="editN(\''+x.k.replace(/'/g,"\\'")+'\',this.value)"><button onclick="delW(\''+x.k.replace(/'/g,"\\'")+'\');$(\'blx\').click()">✕</button></div>'});
  });
  show(h);
 };
@@ -719,7 +728,7 @@ async function initFB(){
 function merge(a,b){
  const m={};[...a.lex,...(b.lex||[])].forEach(x=>{if(!m[x.k]||(x.t||0)>(m[x.k].t||0))m[x.k]=x});
  const newer=(b.ts||0)>(a.ts||0)?b:a;
- return Object.assign({},a,{fs:newer.fs||a.fs,t:newer.t,pos:Object.assign({},a.pos,newer.pos),done:Object.assign({},b.done||{},a.done),sp:(b.ts||0)>(a.ts||0)?Object.assign({},a.sp,b.sp):Object.assign({},b.sp,a.sp),lex:Object.values(m).filter(x=>x.lang!=='ar')});
+ return Object.assign({},a,{fs:newer.fs||a.fs,t:newer.t,pos:Object.assign({},a.pos,newer.pos),done:Object.assign({},b.done||{},a.done),sp:(b.ts||0)>(a.ts||0)?Object.assign({},a.sp,b.sp):Object.assign({},b.sp,a.sp),lex:normLex(Object.values(m))});
 }
 async function pull(){
  try{const d=await db.collection('users').doc(user.uid).get();
